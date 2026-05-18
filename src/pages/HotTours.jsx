@@ -18,6 +18,7 @@ import { heroFor } from '../utils/destinationImages';
 import { toast } from '../components/Toast';
 import useSEO from '../hooks/useSEO';
 import { useDateDaysSync } from '../hooks/useDateDaysSync';
+import BudgetAdvisory from '../components/BudgetAdvisory';
 
 const PREFS_KEY = 'maf_ai_prefs';
 const loadPrefs = () => { try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch { return {}; } };
@@ -237,6 +238,9 @@ const HotTours = () => {
 
                 <div className="p-5 md:p-6 space-y-4">
                   <BalanceField value={balance} onChange={setBalance} />
+
+                  {/* Low-budget advisory — appears under $500 */}
+                  <BudgetAdvisory balance={balance} />
 
                   <div>
                     <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-1.5">

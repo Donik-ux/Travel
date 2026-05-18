@@ -15,6 +15,7 @@ import { handleImgError } from '../utils/imageFallback';
 import { heroFor } from '../utils/destinationImages';
 import { toast } from '../components/Toast';
 import SmartImage from '../components/SmartImage';
+import BudgetAdvisory from '../components/BudgetAdvisory';
 
 /* ── Static showcases ─────────────────────────────────────────────── */
 const TRENDING = [
@@ -333,6 +334,9 @@ const Home = () => {
                       </button>
                     ))}
                   </div>
+
+                  {/* Low-budget advisory — appears when balance < $500 */}
+                  <BudgetAdvisory balance={aiBalance} className="mt-1" />
                 </div>
               )}
 

@@ -9,6 +9,7 @@ import {
 import FlightSearch from '../features/flights/FlightSearch';
 import FlightCard from '../features/flights/FlightCard';
 import { useFlights } from '../hooks/useFlights';
+import { AIRLINE_LINKS } from '../services/airlineLinks';
 import useStore from '../store/useStore';
 import { useTranslation } from '../store/useLangStore';
 import useAdminStore from '../store/useAdminStore';
@@ -439,13 +440,58 @@ export default function Flights() {
           </section>
         )}
 
-        {/* ── External Booking Sites ── */}
+        {/* ── Official airlines · book direct ── */}
         <section className="mt-10">
-          <div className="flex items-end gap-2 mb-3 flex-wrap">
-            <Globe className="w-5 h-5 text-[#0071c2]" />
-            <h2 className="text-[20px] font-black text-[#1a1a1a]">{t('flights.bookingSites') || 'Compare on top flight platforms'}</h2>
+          <div className="flex items-end gap-2 mb-2 flex-wrap">
+            <BadgeCheck className="w-5 h-5 text-[#008009]" />
+            <h2 className="text-[20px] md:text-[24px] font-black text-[#1a1a1a]">Buy direct from the airline</h2>
+            <span className="px-2 py-0.5 bg-[#e8f5e9] text-[#008009] text-[10px] font-black uppercase tracking-wider rounded-md">Official</span>
           </div>
-          <p className="text-[#595959] text-[13px] font-medium mb-5">{t('flights.bookingSub') || 'Open the platform with the best fare for your route.'}</p>
+          <p className="text-[#595959] text-[13px] font-medium mb-5">
+            No middleman, no extra fee — book on the airline's own website with miles, free changes, and direct customer support.
+          </p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Object.values(AIRLINE_LINKS).map((al) => (
+              <a key={al.name} href={al.homepage} target="_blank" rel="noopener noreferrer"
+                className="bg-white border-2 border-[#e7e7e7] hover:border-[#008009] hover:shadow-lg rounded-2xl p-4 flex flex-col gap-2 transition group active:scale-[0.98]">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-[#f8f9fa] border border-[#e7e7e7] flex items-center justify-center text-xl shrink-0">
+                      {al.flag}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-black text-[#1a1a1a] truncate leading-tight">{al.name}</p>
+                      <p className="text-[10.5px] text-[#0071c2] font-bold truncate">{al.domain}</p>
+                    </div>
+                  </div>
+                  <BadgeCheck className="w-4 h-4 text-[#008009] shrink-0 mt-0.5" title="Official airline" />
+                </div>
+                <div className="flex items-center gap-1 text-[#008009] text-[11px] font-black group-hover:gap-2 transition-all mt-auto">
+                  Book direct <ExternalLink className="w-3 h-3" />
+                </div>
+              </a>
+            ))}
+          </div>
+
+          <div className="mt-5 bg-[#e8f5e9] border border-[#bbf7d0] rounded-xl p-4 flex items-start gap-3">
+            <BadgeCheck className="w-5 h-5 text-[#008009] shrink-0 mt-0.5" />
+            <div className="text-[12px] text-[#155724] font-semibold leading-relaxed">
+              <strong className="font-black">Why buy direct?</strong> Earn frequent-flyer miles · cheaper changes &amp; refunds · direct customer service · same-day operational support (delays, cancellations). The price is usually identical to aggregators.
+            </div>
+          </div>
+        </section>
+
+        {/* ── Aggregators · compare prices ── */}
+        <section className="mt-10">
+          <div className="flex items-end gap-2 mb-2 flex-wrap">
+            <Globe className="w-5 h-5 text-[#0071c2]" />
+            <h2 className="text-[20px] md:text-[24px] font-black text-[#1a1a1a]">{t('flights.bookingSites') || 'Compare on aggregators'}</h2>
+            <span className="px-2 py-0.5 bg-[#f0f5ff] text-[#0071c2] text-[10px] font-black uppercase tracking-wider rounded-md">3rd-party</span>
+          </div>
+          <p className="text-[#595959] text-[13px] font-medium mb-5">
+            {t('flights.bookingSub') || 'Open the platform with the best fare for your route. Sometimes 10–30% cheaper than the airline itself.'}
+          </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {BOOKING_SITES.map((site) => (
@@ -476,7 +522,7 @@ export default function Flights() {
             <div className="text-xl shrink-0">💡</div>
             <div>
               <p className="text-[13px] font-black text-[#a45e00] mb-1">{t('flights.proTip') || 'Pro tip: compare before you buy'}</p>
-              <p className="text-[12px] text-[#7c4a00] font-semibold">{t('flights.proTipSub') || 'Prices vary 10-30% between sites. Open 2-3 platforms before booking.'}</p>
+              <p className="text-[12px] text-[#7c4a00] font-semibold">{t('flights.proTipSub') || 'Prices vary 10-30% between sites. Open 2-3 platforms before booking, then verify on the airline\'s own site.'}</p>
             </div>
           </div>
         </section>

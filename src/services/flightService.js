@@ -1,0 +1,126 @@
+// Real-world airlines that actually fly the listed regions
+const AIRLINES = [
+  { name: 'Turkish Airlines',   code: 'TK', logo: '🇹🇷' },
+  { name: 'Emirates',           code: 'EK', logo: '🇦🇪' },
+  { name: 'Fly Dubai',          code: 'FZ', logo: '🇦🇪' },
+  { name: 'Qatar Airways',      code: 'QR', logo: '🇶🇦' },
+  { name: 'Aeroflot',           code: 'SU', logo: '🇷🇺' },
+  { name: 'Air Astana',         code: 'KC', logo: '🇰🇿' },
+  { name: 'Uzbekistan Airways', code: 'HY', logo: '🇺🇿' },
+  { name: 'Pegasus Airlines',   code: 'PC', logo: '🇹🇷' },
+  { name: 'Air Arabia',         code: 'G9', logo: '🇦🇪' },
+  { name: 'British Airways',    code: 'BA', logo: '🇬🇧' },
+  { name: 'Lufthansa',          code: 'LH', logo: '🇩🇪' },
+  { name: 'Singapore Airlines', code: 'SQ', logo: '🇸🇬' },
+];
+
+// Deterministic pseudo-random helper (so the same route+date always returns the same flights)
+const hashSeed = (s) => {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+};
+const mulberry32 = (seed) => {
+  let a = seed;
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+const pad = (n) => String(n).padStart(2, '0');
+const fmtTime = (h, m) => {
+  const period = h < 12 ? 'AM' : 'PM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${pad(m)} ${period}`;
+};
+
+// Approximate base prices for popular city pairs (USD, one-way economy)
+const BASE_PRICES = {
+  'FRU-DXB': 240, 'FRU-IST': 280, 'FRU-MOW': 180, 'FRU-LON': 520, 'FRU-PAR': 540, 'FRU-NYC': 740, 'FRU-BKK': 380, 'FRU-TKO': 720,
+  'ALA-DXB': 230, 'ALA-IST': 270, 'ALA-BKK': 360, 'ALA-LON': 510, 'ALA-PAR': 530, 'ALA-NYC': 720,
+  'TAS-DXB': 260, 'TAS-IST': 290, 'TAS-MOW': 200, 'TAS-LON': 540, 'TAS-PAR': 560,
+};
+
+const matchPrice = (from, to) => {
+  // Try to find a route code by extracting airport code from "City (CODE)"
+  const codeOf = (s) => {
+    const m = String(s || '').match(/\(([A-Z]{3,4})\)/);
+    if (m) return m[1].slice(0, 3);
+    return String(s || '').toUpperCase().slice(0, 3);
+  };
+  const a = codeOf(from), b = codeOf(to);
+  return BASE_PRICES[`${a}-${b}`] || BASE_PRICES[`${b}-${a}`] || 350;
+};
+
+const CABIN_MULTIPLIER = {
+  'Economy':         1,
+  'Premium Economy': 1.6,
+  'Business':        3.2,
+  'First':           6.0,
+};
+
+export const searchFlights = async ({ from, to, date, cabin = 'Economy', pax = 1 } = {}) => {
+  await new Promise((resolve) => setTimeout(resolve, 900));
+
+  if (!from || !to) return [];
+
+  const seedStr = `${from}|${to}|${date || 'any'}|${cabin}`;
+  const rand = mulberry32(hashSeed(seedStr));
+  const basePrice = matchPrice(from, to);
+  const cabinMult = CABIN_MULTIPLIER[cabin] || 1;
+
+  const pickAirline = () => AIRLINES[Math.floor(rand() * AIRLINES.length)];
+
+  return Array.from({ length: 6 }, (_, i) => {
+    const airline   = pickAirline();
+    const stops     = rand() > 0.55 ? 0 : rand() > 0.5 ? 1 : 2;
+
+    // Duration: nonstop = 3-5h, 1 stop = 6-10h, 2 stops = 11-16h
+    const baseMins  = stops === 0 ? 180 + Math.floor(rand() * 120)
+                   : stops === 1 ? 360 + Math.floor(rand() * 240)
+                   :               660 + Math.floor(rand() * 300);
+    const durH = Math.floor(baseMins / 60);
+    const durM = baseMins % 60;
+    const duration = `${durH}h ${pad(durM)}m`;
+
+    // Departure 04:00–23:00
+    const depH = 4 + Math.floor(rand() * 19);
+    const depM = Math.floor(rand() * 12) * 5;
+    const arrTotal = (depH * 60 + depM + baseMins) % (24 * 60);
+    const arrH = Math.floor(arrTotal / 60);
+    const arrM = arrTotal % 60;
+
+    // Price: base * cabin * (1 + small jitter) + extra per stop
+    const jitter   = 0.8 + rand() * 0.5;
+    const stopCost = stops * (-15 - rand() * 25);  // stops are usually cheaper
+    const price    = Math.round(basePrice * cabinMult * jitter + stopCost);
+
+    const seatsLeft = 1 + Math.floor(rand() * 23);
+
+    return {
+      id: `${airline.code}-${i}-${seedStr.length}`,
+      airline:     airline.name,
+      airlineCode: `${airline.code}-${100 + Math.floor(rand() * 900)}`,
+      airlineLogo: airline.logo,
+      cabin,
+      price,
+      pricePerPerson: price,
+      totalPrice: price * Math.max(1, Number(pax) || 1),
+      departure: fmtTime(depH, depM),
+      arrival:   fmtTime(arrH, arrM),
+      duration,
+      stops,
+      from: String(from).toUpperCase(),
+      to:   String(to).toUpperCase(),
+      date,
+      seats: seatsLeft,
+      eco:   stops === 0 && airline.code !== 'EK',  // direct + non-Emirates pseudo "eco"
+    };
+  }).sort((a, b) => a.price - b.price);
+};

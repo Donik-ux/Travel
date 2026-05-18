@@ -1,3 +1,5 @@
+import { askGrok, isGrokAvailable, extractJson } from './grokClient';
+
 // Real-world airlines that actually fly the listed regions
 const AIRLINES = [
   { name: 'Turkish Airlines',   code: 'TK', logo: '🇹🇷' },
@@ -65,14 +67,62 @@ const CABIN_MULTIPLIER = {
   'First':           6.0,
 };
 
-export const searchFlights = async ({ from, to, date, cabin = 'Economy', pax = 1 } = {}) => {
+/* ── Grok-powered base-price refinement (cached per route+date) ──
+ *
+ * Asks Grok for a realistic typical economy fare for the given route on the given
+ * date based on its knowledge of the airline market — then we derive the 6 flights
+ * around that anchor price using the same deterministic mulberry seeding so the
+ * results stay consistent on re-search.
+ */
+const PRICE_CACHE = new Map();
+const PRICE_CACHE_TTL = 30 * 60 * 1000;  // 30 minutes
+
+const cacheKey = (from, to, date) => `${from}|${to}|${date || 'any'}`;
+
+const askGrokForPrice = async ({ from, to, date, signal }) => {
+  if (!isGrokAvailable()) return null;
+
+  const prompt = `You are an airfare expert. Estimate a realistic ONE-WAY ECONOMY base fare in USD for a flight from ${from} to ${to}${date ? ` on or near ${date}` : ''}.
+Consider: airline market (low-cost vs full-service), route distance, typical layovers, seasonality of the date.
+Return ONLY a tight JSON object: { "median": NUMBER, "low": NUMBER, "high": NUMBER, "currency": "USD", "note": "<one short sentence>" }.
+Prices should be sane (no extreme outliers): commonly $120–$1500 for most routes.`;
+
+  try {
+    const raw = await askGrok(prompt, { temperature: 0.4, json: true, signal, timeoutMs: 18_000 });
+    const parsed = extractJson(raw);
+    const median = Number(parsed.median);
+    if (!Number.isFinite(median) || median < 50 || median > 5000) return null;
+    return {
+      median,
+      low:  Number(parsed.low)  || Math.round(median * 0.75),
+      high: Number(parsed.high) || Math.round(median * 1.4),
+      note: String(parsed.note || '').slice(0, 140),
+    };
+  } catch (err) {
+    console.warn('Grok price estimate failed:', err.message);
+    return null;
+  }
+};
+
+export const refineWithAi = async ({ from, to, date }) => {
+  const key = cacheKey(from, to, date);
+  const cached = PRICE_CACHE.get(key);
+  if (cached && Date.now() - cached.ts < PRICE_CACHE_TTL) return cached.value;
+
+  const value = await askGrokForPrice({ from, to, date });
+  if (value) PRICE_CACHE.set(key, { ts: Date.now(), value });
+  return value;
+};
+
+export const searchFlights = async ({ from, to, date, cabin = 'Economy', pax = 1, aiBasePrice } = {}) => {
   await new Promise((resolve) => setTimeout(resolve, 900));
 
   if (!from || !to) return [];
 
   const seedStr = `${from}|${to}|${date || 'any'}|${cabin}`;
   const rand = mulberry32(hashSeed(seedStr));
-  const basePrice = matchPrice(from, to);
+  // Prefer AI-suggested base price when present, otherwise the curated table
+  const basePrice = Number.isFinite(aiBasePrice) ? aiBasePrice : matchPrice(from, to);
   const cabinMult = CABIN_MULTIPLIER[cabin] || 1;
 
   const pickAirline = () => AIRLINES[Math.floor(rand() * AIRLINES.length)];

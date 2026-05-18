@@ -77,6 +77,7 @@ export default function TripPlan() {
 
   const [travelers,  setTravelers]  = useState(2);
   const [travelDate, setTravelDate] = useState(startDateState || '');
+  const [returnDate, setReturnDate] = useState(location.state?.returnDate || searchParams.get('return') || '');
   const [fromCity,   setFromCity]   = useState(fromCityState || 'Bishkek');
   const [purpose,    setPurpose]    = useState(purposeState || 'Tourism and cultural exploration');
   const [name,       setName]       = useState(user?.name || '');
@@ -627,10 +628,26 @@ export default function TripPlan() {
                     className="w-full bg-transparent outline-none text-[14px] font-semibold text-[#1a1a1a] placeholder:text-[#b0b0b0]" />
                 </Field>
 
-                <Field label="Start date" icon={<Calendar className="w-3.5 h-3.5" />}>
-                  <input type="date" value={travelDate} min={new Date().toISOString().split('T')[0]} onChange={e => setTravelDate(e.target.value)}
-                    className="w-full bg-transparent outline-none text-[14px] font-semibold text-[#1a1a1a]" />
-                </Field>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Depart" icon={<Calendar className="w-3.5 h-3.5" />}>
+                    <input type="date" value={travelDate} min={new Date().toISOString().split('T')[0]}
+                      onChange={e => {
+                        const v = e.target.value;
+                        setTravelDate(v);
+                        // Slide return date along to keep duration the same
+                        if (v && item?.duration) {
+                          const d = new Date(v); d.setDate(d.getDate() + Math.max(0, Number(item.duration) - 1));
+                          if (!isNaN(d)) setReturnDate(d.toISOString().split('T')[0]);
+                        }
+                      }}
+                      className="w-full bg-transparent outline-none text-[14px] font-semibold text-[#1a1a1a]" />
+                  </Field>
+                  <Field label="Return" icon={<Calendar className="w-3.5 h-3.5" />}>
+                    <input type="date" value={returnDate} min={travelDate || new Date().toISOString().split('T')[0]}
+                      onChange={e => setReturnDate(e.target.value)}
+                      className="w-full bg-transparent outline-none text-[14px] font-semibold text-[#1a1a1a]" />
+                  </Field>
+                </div>
 
                 <Field label="Trip purpose" icon={<Sparkles className="w-3.5 h-3.5" />}>
                   <select value={purpose} onChange={e => setPurpose(e.target.value)}

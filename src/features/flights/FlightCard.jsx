@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { Plane, Clock, Users, Leaf } from 'lucide-react';
+import { Plane, Clock, Users, Leaf, ExternalLink, BadgeCheck } from 'lucide-react';
 import { useTranslation } from '../../store/useLangStore';
 import FlightBookingModal from '../../components/FlightBookingModal';
+import { officialUrlFor, airlineMetaOf } from '../../services/airlineLinks';
 
-export default function FlightCard({ flight, index }) {
+export default function FlightCard({ flight, index, aiPriced }) {
   const { t }   = useTranslation();
   const [open, setOpen] = useState(false);
 
   const seatsTight = flight.seats != null && flight.seats <= 5;
+  const officialUrl = officialUrlFor(flight);
+  const meta = airlineMetaOf(flight);
 
   return (
     <>
@@ -17,16 +20,36 @@ export default function FlightCard({ flight, index }) {
         onClick={() => setOpen(true)}
       >
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
-          {/* Airline */}
-          <div className="flex items-center gap-3 lg:w-44 shrink-0">
-            <div className="w-12 h-12 rounded-xl bg-[#f0f5ff] border border-[#dceaff] flex items-center justify-center text-2xl shrink-0">
-              {flight.airlineLogo || <Plane className="w-5 h-5 text-[#0071c2] -rotate-45" />}
+          {/* Airline — clickable when an official site is known */}
+          {officialUrl ? (
+            <a href={officialUrl} target="_blank" rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-3 lg:w-44 shrink-0 rounded-lg -m-1 p-1 hover:bg-[#f0f5ff] transition group/airline"
+              title={`Book directly on ${meta?.domain || flight.airline}`}>
+              <div className="w-12 h-12 rounded-xl bg-[#f0f5ff] border border-[#dceaff] flex items-center justify-center text-2xl shrink-0">
+                {meta?.flag || flight.airlineLogo || <Plane className="w-5 h-5 text-[#0071c2] -rotate-45" />}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[14px] font-black text-[#1a1a1a] truncate">{flight.airline}</p>
+                  <BadgeCheck className="w-3.5 h-3.5 text-[#008009] shrink-0" />
+                </div>
+                <p className="text-[11px] text-[#0071c2] font-bold truncate flex items-center gap-1">
+                  {meta?.domain || flight.airlineCode} <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                </p>
+              </div>
+            </a>
+          ) : (
+            <div className="flex items-center gap-3 lg:w-44 shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-[#f0f5ff] border border-[#dceaff] flex items-center justify-center text-2xl shrink-0">
+                {flight.airlineLogo || <Plane className="w-5 h-5 text-[#0071c2] -rotate-45" />}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[14px] font-black text-[#1a1a1a] truncate">{flight.airline}</p>
+                <p className="text-[11px] text-[#9ca3af] font-semibold">{flight.airlineCode} · {flight.cabin}</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-[14px] font-black text-[#1a1a1a] truncate">{flight.airline}</p>
-              <p className="text-[11px] text-[#9ca3af] font-semibold">{flight.airlineCode} · {flight.cabin}</p>
-            </div>
-          </div>
+          )}
 
           {/* Route */}
           <div className="flex-1 flex items-center gap-3 w-full">
@@ -64,16 +87,27 @@ export default function FlightCard({ flight, index }) {
           </div>
 
           {/* Price + Button */}
-          <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-3 w-full lg:w-auto lg:min-w-[140px]">
+          <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-3 w-full lg:w-auto lg:min-w-[160px]">
             <div className="text-right">
               <p className="text-[26px] font-black text-[#003580] leading-none tabular-nums">${flight.price}</p>
-              <p className="text-[11px] text-[#9ca3af] font-semibold mt-0.5">{t('flights.results.perPerson') || 'per person'}</p>
+              <p className="text-[11px] text-[#9ca3af] font-semibold mt-0.5">
+                {aiPriced ? '🤖 AI-priced' : (t('flights.results.perPerson') || 'per person')}
+              </p>
             </div>
-            <button
-              onClick={e => { e.stopPropagation(); setOpen(true); }}
-              className="px-5 py-2.5 rounded-xl bg-[#febb02] hover:bg-[#ffb700] text-[#1a1a1a] text-[12px] font-black transition active:scale-95 whitespace-nowrap shadow-sm">
-              {t('flights.results.select') || 'Select'}
-            </button>
+            <div className="flex flex-col items-end gap-1.5">
+              {officialUrl && (
+                <a href={officialUrl} target="_blank" rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="px-3 py-2 rounded-lg bg-[#008009] hover:bg-[#006d07] text-white text-[11px] font-black transition active:scale-95 whitespace-nowrap shadow-sm flex items-center gap-1.5">
+                  <BadgeCheck className="w-3 h-3" /> Book on {meta?.domain.split('.')[0]}
+                </a>
+              )}
+              <button
+                onClick={e => { e.stopPropagation(); setOpen(true); }}
+                className="px-3 py-2 rounded-lg bg-[#febb02] hover:bg-[#ffb700] text-[#1a1a1a] text-[11px] font-black transition active:scale-95 whitespace-nowrap shadow-sm">
+                Compare prices
+              </button>
+            </div>
           </div>
         </div>
 

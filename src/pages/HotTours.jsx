@@ -17,6 +17,7 @@ import { handleImgError } from '../utils/imageFallback';
 import { heroFor } from '../utils/destinationImages';
 import { toast } from '../components/Toast';
 import useSEO from '../hooks/useSEO';
+import { useDateDaysSync } from '../hooks/useDateDaysSync';
 
 const PREFS_KEY = 'maf_ai_prefs';
 const loadPrefs = () => { try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch { return {}; } };
@@ -74,6 +75,11 @@ const HotTours = () => {
   const [from,    setFrom]    = useState(initialFrom);
   const [destInput, setDestInput] = useState(initialDest);
   const [startDate, setStartDate] = useState(initialStart);
+  const [returnDate, setReturnDate] = useState('');
+  const sync = useDateDaysSync({
+    departure: startDate, returnDate, days,
+    setDeparture: setStartDate, setReturn: setReturnDate, setDays,
+  });
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState(null);
   const [result,  setResult]  = useState(null);          // { packages, source, tier }
@@ -238,7 +244,7 @@ const HotTours = () => {
                     </div>
                     <div className="grid grid-cols-3 gap-1.5 mb-2">
                       {[3, 5, 10].map(n => (
-                        <button key={n} type="button" onClick={() => setDays(n)}
+                        <button key={n} type="button" onClick={() => sync.onChangeDays(n)}
                           className={`py-3 rounded-xl text-[14px] font-black transition active:scale-95 ${
                             Number(days) === n
                               ? 'bg-[#003580] text-white shadow-md ring-2 ring-[#003580]/30'
@@ -250,11 +256,11 @@ const HotTours = () => {
                     </div>
                     <div className="flex items-center gap-2 bg-[#f8f9fa] border border-[#e7e7e7] rounded-xl px-3 py-2">
                       <span className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af]">Custom:</span>
-                      <button type="button" onClick={() => setDays(d => Math.max(1, d - 1))}
+                      <button type="button" onClick={() => sync.onChangeDays(Math.max(1, Number(days) - 1))}
                         className="w-7 h-7 rounded-md bg-white border border-[#e7e7e7] text-[#0071c2] text-[16px] font-black hover:border-[#0071c2] active:scale-95 transition">−</button>
-                      <input type="number" min="1" max="21" value={days} onChange={e => setDays(e.target.value)}
+                      <input type="number" min="1" max="21" value={days} onChange={e => sync.onChangeDays(e.target.value)}
                         className="w-12 bg-transparent outline-none text-[16px] font-black text-[#003580] text-center" />
-                      <button type="button" onClick={() => setDays(d => Math.min(21, Number(d) + 1))}
+                      <button type="button" onClick={() => sync.onChangeDays(Math.min(21, Number(days) + 1))}
                         className="w-7 h-7 rounded-md bg-white border border-[#e7e7e7] text-[#0071c2] text-[16px] font-black hover:border-[#0071c2] active:scale-95 transition">+</button>
                       <span className="text-[11px] text-[#9ca3af] font-bold ml-auto">days</span>
                     </div>
@@ -266,14 +272,22 @@ const HotTours = () => {
                       className="w-full bg-transparent outline-none text-[14px] font-bold text-[#1a1a1a] placeholder:text-[#b0b0b0]" />
                   </Field>
 
+                  <Field icon={<Plane className="w-4 h-4" />} label="Departing from">
+                    <input type="text" value={from} onChange={e => setFrom(e.target.value)} placeholder="Bishkek"
+                      className="w-full bg-transparent outline-none text-[14px] font-bold text-[#1a1a1a]" />
+                  </Field>
+
                   <div className="grid grid-cols-2 gap-3">
-                    <Field icon={<Plane className="w-4 h-4" />} label="Departing from">
-                      <input type="text" value={from} onChange={e => setFrom(e.target.value)} placeholder="Bishkek"
+                    <Field icon={<Calendar className="w-4 h-4" />} label="Depart">
+                      <input type="date" value={startDate}
+                        min={new Date().toISOString().split('T')[0]}
+                        onChange={e => sync.onChangeDeparture(e.target.value)}
                         className="w-full bg-transparent outline-none text-[14px] font-bold text-[#1a1a1a]" />
                     </Field>
-                    <Field icon={<Calendar className="w-4 h-4" />} label="Start date (optional)">
-                      <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
+                    <Field icon={<Calendar className="w-4 h-4" />} label="Return">
+                      <input type="date" value={sync.returnDate}
+                        min={startDate || new Date().toISOString().split('T')[0]}
+                        onChange={e => sync.onChangeReturn(e.target.value)}
                         className="w-full bg-transparent outline-none text-[14px] font-bold text-[#1a1a1a]" />
                     </Field>
                   </div>

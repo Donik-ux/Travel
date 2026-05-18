@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   Plane, Filter, TrendingDown, ExternalLink, Search, Star, Globe, Clock,
   ArrowRight, Sparkles, Shield, BadgePercent, Headphones, ThumbsUp, MapPin,
-  Sunrise, Sun, Moon, Sunset, X, Wallet,
+  Sunrise, Sun, Moon, Sunset, X, Wallet, BadgeCheck,
 } from 'lucide-react';
 import FlightSearch from '../features/flights/FlightSearch';
 import FlightCard from '../features/flights/FlightCard';
@@ -72,7 +72,7 @@ export default function Flights() {
 
   const { flights }                   = useStore();
   const adminFlights                  = useAdminStore(s => s.adminFlights);
-  const { getFlights, loading, error } = useFlights();
+  const { getFlights, loading, error, aiRefining, aiSource, source } = useFlights();
 
   const handleSearch = async (eOrPayload) => {
     if (eOrPayload?.preventDefault) eOrPayload.preventDefault();
@@ -295,13 +295,49 @@ export default function Flights() {
                     {cheapest && <> · from <strong className="text-[#003580]">${cheapest}</strong></>}
                   </div>
                 </div>
+                <button
+                  onClick={() => handleSearch({ formData })}
+                  disabled={loading || aiRefining}
+                  className="px-3 py-2 rounded-lg border-2 border-[#0071c2] text-[#0071c2] hover:bg-[#f0f5ff] text-[12px] font-black flex items-center gap-1.5 transition active:scale-95 disabled:opacity-50"
+                  title="Re-fetch prices with AI">
+                  <Sparkles className={`w-3.5 h-3.5 ${aiRefining ? 'animate-pulse' : ''}`} />
+                  {aiRefining ? 'AI refining prices…' : 'Refresh with AI'}
+                </button>
               </div>
+
+              {/* Source banner: Amadeus / Grok / Template */}
+              {source === 'amadeus' && (
+                <div className="mb-3 px-4 py-3 rounded-xl bg-gradient-to-r from-[#e8f5e9] to-white border border-[#bbf7d0] flex items-center gap-2.5">
+                  <span className="text-[18px]">📡</span>
+                  <div className="text-[12px] font-bold text-[#155724] leading-snug">
+                    <strong>Live data · Powered by Amadeus GDS</strong> — these are real prices &amp; times pulled from the same global distribution system that airlines and Skyscanner use. Verify the final price on the airline site before paying.
+                  </div>
+                </div>
+              )}
+              {aiRefining && source !== 'amadeus' && (
+                <div className="mb-3 px-4 py-3 rounded-xl bg-gradient-to-r from-[#f0f5ff] to-[#dceaff] border border-[#0071c2]/20 flex items-center gap-2.5">
+                  <Sparkles className="w-4 h-4 text-[#0071c2] animate-pulse shrink-0" />
+                  <div className="text-[12px] text-[#003580] font-bold">
+                    Grok is checking realistic fares for this route… prices will update in a moment.
+                  </div>
+                </div>
+              )}
+              {!aiRefining && source === 'grok' && aiSource && (
+                <div className="mb-3 px-4 py-3 rounded-xl bg-gradient-to-r from-[#fff7e6] to-white border border-[#ffd76e] flex items-center gap-2.5">
+                  <BadgeCheck className="w-4 h-4 text-[#a45e00] shrink-0" />
+                  <div className="text-[12px] font-bold text-[#7c4a00] leading-snug">
+                    <strong>🤖 AI-priced estimate</strong> · median <strong>${aiSource.median}</strong> · typical range ${aiSource.low}–${aiSource.high}{aiSource.note ? ` · ${aiSource.note}` : ''}
+                    <br/>
+                    <span className="font-semibold text-[#a45e00]/85">No live GDS connection — configure Amadeus keys for real prices. Always verify on the airline site.</span>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-3">
                 {filtered.length > 0 ? (
                   filtered.map((flight, idx) => (
                     <motion.div key={flight.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: idx * 0.04 }}>
-                      <FlightCard flight={flight} index={idx} />
+                      <FlightCard flight={flight} index={idx} aiPriced={!!aiSource} />
                     </motion.div>
                   ))
                 ) : (

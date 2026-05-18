@@ -10,6 +10,7 @@ import {
 import useAdminStore from '../store/useAdminStore';
 import useWishlistStore from '../store/useWishlistStore';
 import useSEO from '../hooks/useSEO';
+import { useDateDaysSync } from '../hooks/useDateDaysSync';
 import { handleImgError } from '../utils/imageFallback';
 import { heroFor } from '../utils/destinationImages';
 import { toast } from '../components/Toast';
@@ -67,6 +68,20 @@ const Home = () => {
   const [aiDest,    setAiDest]    = useState('');
   const [aiFrom,    setAiFrom]    = useState('Bishkek');
   const [aiStart,   setAiStart]   = useState('');
+  const [aiReturn,  setAiReturn]  = useState('');
+
+  // Two-way sync for the AI tab (departure ↔ return ↔ days)
+  const aiSync = useDateDaysSync({
+    departure: aiStart, returnDate: aiReturn, days: aiDays,
+    setDeparture: setAiStart, setReturn: setAiReturn, setDays: setAiDays,
+  });
+
+  // Two-way sync for the Tours tab (uses `checkin` as departure, `checkout` as return)
+  const [toursDays, setToursDays] = useState(7);
+  const toursSync = useDateDaysSync({
+    departure: checkin, returnDate: checkout, days: toursDays,
+    setDeparture: setCheckin, setReturn: setCheckout, setDays: setToursDays,
+  });
 
   const submit = (e) => {
     e?.preventDefault?.();
@@ -104,13 +119,15 @@ const Home = () => {
           days:    String(d),
           balance: String(balance),
           from:    trimmedFrom,
-          ...(aiStart ? { start: aiStart } : {}),
+          ...(aiStart  ? { start:  aiStart }  : {}),
+          ...(aiReturn ? { return: aiReturn } : {}),
         });
         navigate(`/trip-plan?${qs.toString()}`, {
           state: {
             item, type: 'package',
             fromCity: trimmedFrom,
             startDate: aiStart || '',
+            returnDate: aiReturn || '',
             purpose: 'Tourism and cultural exploration',
           },
         });
@@ -170,9 +187,40 @@ const Home = () => {
 
               {tab === 'tours' && (
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-1">
-                  <SearchInput className="md:col-span-5" icon={<MapPin className="w-4 h-4" />} label="Where to?" placeholder="Dubai, Bali, Maldives…" value={dest} onChange={setDest} />
-                  <SearchInput className="md:col-span-3" icon={<Calendar className="w-4 h-4" />} label="Start date" type="date" value={checkin} onChange={setCheckin} />
-                  <SearchInput className="md:col-span-3" icon={<Users className="w-4 h-4" />} label="Travelers" type="number" value={travelers} onChange={setTravelers} />
+                  <SearchInput
+                    className="md:col-span-4"
+                    icon={<MapPin className="w-4 h-4" />}
+                    label="Where to?"
+                    placeholder="Dubai, Bali, Maldives…"
+                    value={dest}
+                    onChange={setDest}
+                  />
+                  <SearchInput
+                    className="md:col-span-3"
+                    icon={<Calendar className="w-4 h-4" />}
+                    label="Depart"
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    value={checkin}
+                    onChange={toursSync.onChangeDeparture}
+                  />
+                  <SearchInput
+                    className="md:col-span-3"
+                    icon={<Calendar className="w-4 h-4" />}
+                    label="Return"
+                    type="date"
+                    min={checkin || new Date().toISOString().split('T')[0]}
+                    value={toursSync.returnDate}
+                    onChange={toursSync.onChangeReturn}
+                  />
+                  <SearchInput
+                    className="md:col-span-1"
+                    icon={<Users className="w-4 h-4" />}
+                    label="Pax"
+                    type="number"
+                    value={travelers}
+                    onChange={setTravelers}
+                  />
                   <SearchButton className="md:col-span-1" />
                 </div>
               )}
@@ -208,12 +256,22 @@ const Home = () => {
                       onChange={setAiFrom}
                     />
                     <SearchInput
-                      className="md:col-span-4"
+                      className="md:col-span-2"
                       icon={<Calendar className="w-4 h-4" />}
-                      label="Start date (optional)"
+                      label="Depart"
                       type="date"
+                      min={new Date().toISOString().split('T')[0]}
                       value={aiStart}
-                      onChange={setAiStart}
+                      onChange={aiSync.onChangeDeparture}
+                    />
+                    <SearchInput
+                      className="md:col-span-2"
+                      icon={<Calendar className="w-4 h-4" />}
+                      label="Return"
+                      type="date"
+                      min={aiStart || new Date().toISOString().split('T')[0]}
+                      value={aiSync.returnDate}
+                      onChange={aiSync.onChangeReturn}
                     />
                   </div>
 
@@ -235,7 +293,7 @@ const Home = () => {
                       type="number"
                       placeholder="7"
                       value={aiDays}
-                      onChange={setAiDays}
+                      onChange={aiSync.onChangeDays}
                     />
                     {!aiDest && (
                       <label className="md:col-span-5 block border-2 border-[#e7e7e7] hover:border-[#0071c2] focus-within:border-[#0071c2] rounded-xl px-3 py-2.5 transition">
@@ -269,7 +327,7 @@ const Home = () => {
                   <div className="flex items-center flex-wrap gap-1.5 pt-0.5 px-1">
                     <span className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af] self-center">Quick days:</span>
                     {[3, 5, 7, 10, 14].map(n => (
-                      <button key={n} type="button" onClick={() => setAiDays(n)}
+                      <button key={n} type="button" onClick={() => aiSync.onChangeDays(n)}
                         className={`px-2.5 py-1 rounded-full text-[11px] font-black transition ${Number(aiDays) === n ? 'bg-[#003580] text-white' : 'bg-[#f0f5ff] text-[#0071c2] hover:bg-[#dceaff]'}`}>
                         {n}d
                       </button>
@@ -626,7 +684,7 @@ const Tab = ({ active, onClick, icon, label, highlight }) => (
   </button>
 );
 
-const SearchInput = ({ icon, label, placeholder, type = 'text', value, onChange, className = '' }) => (
+const SearchInput = ({ icon, label, placeholder, type = 'text', value, onChange, className = '', min, max }) => (
   <label className={`block border-2 border-[#e7e7e7] hover:border-[#0071c2] focus-within:border-[#0071c2] rounded-xl px-3 py-2.5 transition ${className}`}>
     <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-0.5">
       <span className="text-[#0071c2]">{icon}</span>{label}
@@ -635,6 +693,8 @@ const SearchInput = ({ icon, label, placeholder, type = 'text', value, onChange,
       type={type}
       placeholder={placeholder}
       value={value}
+      min={min}
+      max={max}
       onChange={e => onChange?.(e.target.value)}
       className="w-full bg-transparent outline-none text-[14px] font-bold text-[#1a1a1a] placeholder:text-[#b0b0b0]"
     />

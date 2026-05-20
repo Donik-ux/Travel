@@ -141,7 +141,7 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] -mt-[60px]">
+    <div className="min-h-screen bg-[#f5f5f5] -mt-[64px]">
 
       {/* ─── HERO + SEARCH (Booking.com style) ───────────────────── */}
       <section className="relative bg-[#003580] pt-[100px] pb-32 md:pb-40 overflow-hidden">

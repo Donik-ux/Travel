@@ -16,7 +16,7 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen bg-[#f5f5f5] text-[#1a1a1a] selection:bg-[#0071c2] selection:text-white">
       {!isAdmin && !isAuth && <Navbar />}
-      <main className={!isAdmin && !isAuth ? 'pt-[60px]' : ''}>{children}</main>
+      <main className={!isAdmin && !isAuth ? 'pt-[64px]' : ''}>{children}</main>
       {!isAdmin && !isAuth && <Footer />}
       <NotificationWidget />
       <ToastContainer />

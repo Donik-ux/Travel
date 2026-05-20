@@ -75,7 +75,7 @@ export default function Wishlist() {
   };
 
   return (
-    <div className="bg-[#f5f5f5] min-h-screen -mt-[60px]">
+    <div className="bg-[#f5f5f5] min-h-screen -mt-[64px]">
       {/* ── Hero header ── */}
       <section className="relative bg-[#003580] text-white overflow-hidden pt-[100px] pb-12">
         <div className="absolute inset-0 opacity-25 pointer-events-none"

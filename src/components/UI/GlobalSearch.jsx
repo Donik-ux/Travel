@@ -41,10 +41,10 @@ export default function GlobalSearch() {
     <>
       {/* Trigger Button */}
       <button onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#e7e7e7] bg-[#f8f9fa] hover:bg-white hover:border-[#0071c2] transition-all text-[#9ca3af] text-sm">
+        className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/15 bg-white/[0.07] hover:bg-white/15 hover:border-[#f5b942]/40 transition-all text-white/55 text-sm">
         <Search className="w-4 h-4" />
         <span className="hidden sm:block text-[12px]">Search flights…</span>
-        <kbd className="hidden sm:flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded bg-white border border-[#e7e7e7] text-[#c9d1d9]">
+        <kbd className="hidden sm:flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 border border-white/15 text-white/45">
           ⌘K
         </kbd>
       </button>

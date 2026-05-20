@@ -1,37 +1,28 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   MapPin, Sparkles, Car, Lightbulb, Plane, Activity, Hotel, ArrowRight,
-  PhoneCall, CheckCircle2, ShoppingBag, Globe, Footprints, Train,
+  CheckCircle2, ShoppingBag, Footprints, Train,
   Download, Clock, UtensilsCrossed, Wallet, Navigation, ChevronDown,
-  ChevronUp, ExternalLink, Languages, Map, AlertTriangle
+  ChevronUp, ExternalLink, AlertTriangle, Save, Check, Briefcase, Phone, Smartphone
 } from 'lucide-react';
 import PlannerForm from '../features/planner/PlannerForm';
 import ItineraryCard from '../features/planner/ItineraryCard';
 import { usePlanner } from '../hooks/usePlanner';
 import useStore from '../store/useStore';
+import useSavedPlansStore from '../store/useSavedPlansStore';
 import { useTranslation } from '../store/useLangStore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { destinations } from '../utils/destinationData';
 import { findCity } from '../services/cityDatabase';
 import { NAV_APPS } from '../services/aiPlannerService';
 import { getDestinationHero, getVisaInfo } from '../services/destinationLookup';
+import { generatePackingList } from '../services/packingList';
+import { getEmergencyContacts } from '../services/emergencyContacts';
+import { getLocalApps } from '../services/localApps';
+import { toast } from '../components/Toast';
 import useSEO from '../hooks/useSEO';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1400&q=80';
-
-/* ── Translator & Map apps ── */
-const TRANSLATOR_APPS = [
-  { name: 'Google Translate',  icon: '🌐', reason: 'Free · 133 languages · offline mode · camera translation', link: 'https://translate.google.com' },
-  { name: 'DeepL Translator',  icon: '🔵', reason: 'Free · the most accurate AI translator for 31 languages',  link: 'https://deepl.com' },
-  { name: 'Microsoft Translator', icon: '🟡', reason: 'Free · 100+ languages · live conversation translation', link: 'https://translator.microsoft.com' },
-];
-
-const MAP_APPS = [
-  { name: 'Google Maps',  icon: '📍', reason: 'Free · best world maps · live traffic · directions',            link: 'https://maps.google.com' },
-  { name: 'Maps.me',      icon: '🗺️', reason: 'Free · 100% offline maps · no internet required',              link: 'https://maps.me' },
-  { name: 'Apple Maps',   icon: '🍎', reason: 'Free · clean UI · great for iOS users worldwide',               link: 'https://maps.apple.com' },
-  { name: 'Organic Maps', icon: '🌿', reason: 'Free · private offline navigator built on OpenStreetMap',       link: 'https://organicmaps.app' },
-];
 
 const getDestImg = (name = '') => {
   if (!name) return FALLBACK_IMG;
@@ -54,7 +45,9 @@ const TRANSPORT_MODES = [
 ];
 
 /* ─── PDF Download ─── */
-function downloadPDF(destination, days, meta, itineraries, t) {
+function downloadPDF(destination, days, meta, itineraries, t, extras = {}) {
+  const { emergency, packing, localApps } = extras;
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const html = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <title>MAFTRAVEL — ${destination} ${days}-Day Plan</title>
@@ -75,6 +68,14 @@ function downloadPDF(destination, days, meta, itineraries, t) {
   .event-name { flex: 1; }
   .event-price { color: #003580; font-weight: bold; }
   .halal { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 10px; margin-top: 8px; font-size: 12px; color: #166534; }
+  .places-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .place { background: #f8f9fa; border: 1px solid #e7e7e7; border-radius: 8px; padding: 10px 12px; page-break-inside: avoid; }
+  .place-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .place-icon { font-size: 15px; }
+  .place-name { font-size: 13px; font-weight: bold; color: #1a1a1a; flex: 1; }
+  .place-day { font-size: 10px; font-weight: bold; color: #003580; background: #e8f4fd; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+  .place-addr { font-size: 11px; color: #9ca3af; margin-bottom: 5px; line-height: 1.4; }
+  .place-map { font-size: 11px; color: #0071c2; text-decoration: none; font-weight: bold; }
   .tips li { font-size: 13px; margin-bottom: 6px; color: #595959; }
   .footer { margin-top: 32px; padding-top: 16px; border-top: 2px solid #e7e7e7; color: #9ca3af; font-size: 11px; text-align: center; }
   @media print { body { padding: 10px; } }
@@ -97,6 +98,48 @@ ${[
 <div class="budget-row" style="background:#e8f4fd;font-weight:bold;"><span>TOTAL</span><span>$${meta.budgetBreakdown.total?.toLocaleString()}</span></div>
 </div>` : ''}
 
+${(() => {
+  /* Collect every sightseeing spot from the itinerary, de-duplicated */
+  const VISIT_TYPES = ['attraction', 'museum', 'nature', 'landmark', 'viewpoint', 'leisure', 'shopping', 'park', 'market'];
+  const TYPE_ICON = { attraction: '📸', museum: '🏛️', nature: '🌿', landmark: '🗿', viewpoint: '🌄', leisure: '🎡', shopping: '🛍️', park: '🌳', market: '🛒' };
+  const seen = new Set();
+  const places = [];
+  itineraries.forEach(day => (day.events || []).forEach(ev => {
+    const type = (ev.type || 'attraction').toLowerCase();
+    if (!VISIT_TYPES.includes(type)) return;
+    const key = (ev.name || '').trim().toLowerCase();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    places.push({ ...ev, type, day: day.day });
+  }));
+  if (!places.length) return '';
+  const mapLink = (ev) => {
+    if (Number.isFinite(ev.lat) && Number.isFinite(ev.lng))
+      return `https://www.google.com/maps?q=${ev.lat},${ev.lng}`;
+    const q = [ev.name, ev.address].filter(Boolean).join(', ').trim();
+    return q ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}` : '';
+  };
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `
+<div class="section">
+<div class="section-title">📍 Places to Visit · ${places.length} spots</div>
+<div class="places-grid">
+${places.map(p => {
+  const url = mapLink(p);
+  return `<div class="place">
+  <div class="place-head">
+    <span class="place-icon">${TYPE_ICON[p.type] || '📍'}</span>
+    <span class="place-name">${esc(p.name)}</span>
+    <span class="place-day">${t('planner.results.day')} ${p.day}</span>
+  </div>
+  ${p.address ? `<div class="place-addr">📍 ${esc(p.address)}${p.district ? ` · ${esc(p.district)}` : ''}</div>` : ''}
+  ${url ? `<a class="place-map" href="${url}">🗺️ Open in Google Maps</a>` : ''}
+</div>`;
+}).join('')}
+</div>
+</div>`;
+})()}
+
 <div class="section">
 <div class="section-title">📅 Day-by-Day Itinerary</div>
 ${itineraries.map(day => `
@@ -113,6 +156,37 @@ ${ev.halalNote ? `<div class="halal">🥩 ${ev.halalNote}</div>` : ''}`).join(''
 ${day.halalRestaurant ? `<div class="halal">🥩 <b>Halal Restaurant:</b> ${day.halalRestaurant.name} · ${day.halalRestaurant.address} · ${day.halalRestaurant.avgPrice}</div>` : ''}
 </div>`).join('')}
 </div>
+
+${packing ? `
+<div class="section">
+<div class="section-title">🎒 Packing Checklist · ${esc(packing.seasonLabel)}</div>
+${packing.categories.map(cat => `
+<div class="day-card">
+<div class="day-title">${cat.emoji} ${esc(cat.title)}</div>
+${cat.items.map(it => `<div class="event" style="padding:4px 0;"><span style="color:#9ca3af;min-width:18px;">☐</span><span class="event-name">${esc(it)}</span></div>`).join('')}
+</div>`).join('')}
+</div>` : ''}
+
+${localApps ? `
+<div class="section">
+<div class="section-title">📱 Useful Apps · ${esc(localApps.country)}</div>
+${[
+  ['🚕 Taxi & transfer',    localApps.taxi],
+  ['🗺️ Maps & navigation',  localApps.maps],
+  ['🌐 Translators',        localApps.translator],
+].map(([label, list]) => `
+<div class="day-card">
+<div class="day-title">${label}</div>
+${list.map(app => `<div class="event" style="padding:4px 0;"><span class="event-name"><b>${esc(app.name)}</b> — <small style="color:#9ca3af">${esc(app.reason)}</small></span></div>`).join('')}
+</div>`).join('')}
+</div>` : ''}
+
+${emergency ? `
+<div class="section">
+<div class="section-title">🆘 Emergency Contacts · ${emergency.flag} ${esc(emergency.country)}</div>
+${emergency.numbers.map(n => `<div class="budget-row"><span>${n.icon || '📞'} ${esc(n.service)}${n.note ? ` — <small style="color:#9ca3af">${esc(n.note)}</small>` : ''}</span><span>${esc(n.number)}</span></div>`).join('')}
+${emergency.tips?.length ? `<p style="font-size:12px;color:#595959;margin-top:10px;">💡 ${emergency.tips.map(esc).join(' · ')}</p>` : ''}
+</div>` : ''}
 
 ${meta?.travelTips?.length ? `
 <div class="section">
@@ -174,20 +248,59 @@ export default function Planner() {
   const [formData, setFormData] = useState({ destination: '', startDate: '', days: 5, budget: 2000 });
   const [transport, setTransport] = useState('walking');
   const [showNavApps, setShowNavApps] = useState(false);
-  const [showTranslators, setShowTranslators] = useState(false);
-  const [showMaps, setShowMaps] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [packChecked, setPackChecked] = useState({});
 
+  const location = useLocation();
   const { itineraries, itineraryMeta } = useStore();
   const { getPlan, loading, error }    = usePlanner();
+  const savePlan = useSavedPlansStore(s => s.savePlan);
+
+  // Restore a saved plan, or auto-generate one when arriving from an Exotic Tour
+  useEffect(() => {
+    const restored = location.state?.restoredFormData;
+    const autoPlan = location.state?.autoPlanFormData;
+    if (restored) {
+      setFormData(restored);
+      setTransport(restored.transportMode || 'walking');
+      setSaved(true);
+      setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+    } else if (autoPlan) {
+      setFormData(autoPlan);
+      setTransport(autoPlan.transportMode || 'public');
+      setSaved(false);
+      setPackChecked({});
+      getPlan({ ...autoPlan, transportMode: autoPlan.transportMode || 'public' })
+        .then(() => setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200))
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaved(false);
+    setPackChecked({});
     await getPlan({ ...formData, transportMode: transport });
     setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   };
 
+  const handleSavePlan = () => {
+    if (saved) return;
+    savePlan({ formData: { ...formData, transportMode: transport }, itineraries, meta });
+    setSaved(true);
+    toast.success('Plan saved', 'Find it any time in "My Trip Plans".');
+  };
+
   const meta       = itineraryMeta;
   const hasResults = itineraries.length > 0 && meta;
+
+  const packing    = useMemo(() => hasResults ? generatePackingList(formData) : null, [hasResults, formData]);
+  const emergency  = useMemo(() => hasResults ? getEmergencyContacts(formData.destination) : null, [hasResults, formData.destination]);
+  const localApps  = useMemo(() => hasResults ? getLocalApps(formData.destination) : null, [hasResults, formData.destination]);
+  const planTotal  = meta?.budgetBreakdown?.total || 0;
+  const userBudget = Number(formData.budget) || 0;
+  const budgetDiff = userBudget - planTotal;
 
   const budgetRows = meta ? [
     { label: 'Flights',       amount: meta.budgetBreakdown.flight,        icon: Plane,           color: 'bg-blue-400'    },
@@ -284,12 +397,25 @@ export default function Planner() {
                 )}
                 <p className="text-white/60 text-sm mt-1">{itineraries.length} days · ${meta.budgetBreakdown.total.toLocaleString()} budget</p>
               </div>
-              {/* PDF Download */}
-              <button
-                onClick={() => downloadPDF(formData.destination, formData.days, meta, itineraries, t)}
-                className="no-print flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#003580] text-[13px] font-bold hover:bg-white/90 transition-premium shadow-lg">
-                <Download className="w-4 h-4" /> Download PDF
-              </button>
+              {/* Save + PDF Download */}
+              <div className="no-print flex items-center gap-2">
+                <button
+                  onClick={handleSavePlan}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-premium shadow-lg ${
+                    saved
+                      ? 'bg-green-500 text-white cursor-default'
+                      : 'bg-[#f5b942] text-[#002250] hover:bg-[#e0a435]'
+                  }`}>
+                  {saved
+                    ? <><Check className="w-4 h-4" /> Saved</>
+                    : <><Save className="w-4 h-4" /> Save plan</>}
+                </button>
+                <button
+                  onClick={() => downloadPDF(formData.destination, formData.days, meta, itineraries, t, { emergency, packing, localApps })}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#003580] text-[13px] font-bold hover:bg-white/90 transition-premium shadow-lg">
+                  <Download className="w-4 h-4" /> Download PDF
+                </button>
+              </div>
             </div>
           </div>
 
@@ -311,6 +437,28 @@ export default function Planner() {
               </div>
             ) : null;
           })()}
+
+          {/* Budget fit check */}
+          {userBudget > 0 && (
+            <div className={`mb-5 flex items-start gap-3 p-4 rounded-2xl border-2 ${
+              budgetDiff >= 0 ? 'bg-green-50 border-green-300' : 'bg-amber-50 border-amber-300'
+            }`}>
+              {budgetDiff >= 0
+                ? <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+                : <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />}
+              <div>
+                <p className={`text-[14px] font-black mb-0.5 ${budgetDiff >= 0 ? 'text-green-800' : 'text-amber-800'}`}>
+                  {budgetDiff >= 0
+                    ? `✅ План укладывается в бюджет — остаётся $${budgetDiff.toLocaleString()}`
+                    : `⚠️ План превышает бюджет на $${Math.abs(budgetDiff).toLocaleString()}`}
+                </p>
+                <p className={`text-[12px] ${budgetDiff >= 0 ? 'text-green-700' : 'text-amber-700'}`}>
+                  Ваш бюджет ${userBudget.toLocaleString()} · стоимость плана ${planTotal.toLocaleString()}
+                  {budgetDiff < 0 && ' — попробуйте сократить число дней или выбрать эконом-стиль.'}
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
             {/* Budget card */}
@@ -366,58 +514,6 @@ export default function Planner() {
                 )}
               </div>
 
-              {/* Translator & Map apps */}
-              <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <Languages className="w-4 h-4 text-[#0071c2]" />
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-[#9ca3af]">Переводчики и карты</p>
-                </div>
-
-                {/* Translators */}
-                <button onClick={() => setShowTranslators(v => !v)}
-                  className="flex items-center justify-between w-full text-[12px] font-bold text-[#0071c2] hover:text-[#003580] transition-premium mb-2">
-                  <span className="flex items-center gap-1.5">🌐 Лучшие переводчики (бесплатно)</span>
-                  {showTranslators ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </button>
-                {showTranslators && (
-                  <div className="flex flex-col gap-2 mb-3">
-                    {TRANSLATOR_APPS.map(app => (
-                      <a key={app.name} href={app.link} target="_blank" rel="noopener noreferrer"
-                        className="flex items-start gap-2.5 p-2.5 bg-[#f8f9fa] rounded-lg border border-[#e7e7e7] hover:border-[#0071c2]/30 transition-premium">
-                        <span className="text-lg">{app.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-bold text-[#1a1a1a]">{app.name}</p>
-                          <p className="text-[11px] text-[#9ca3af]">{app.reason}</p>
-                        </div>
-                        <ExternalLink className="w-3 h-3 text-[#9ca3af] shrink-0 mt-0.5" />
-                      </a>
-                    ))}
-                  </div>
-                )}
-
-                {/* Maps */}
-                <button onClick={() => setShowMaps(v => !v)}
-                  className="flex items-center justify-between w-full text-[12px] font-bold text-[#0071c2] hover:text-[#003580] transition-premium">
-                  <span className="flex items-center gap-1.5">🗺️ Карты города (бесплатно)</span>
-                  {showMaps ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </button>
-                {showMaps && (
-                  <div className="flex flex-col gap-2 mt-2">
-                    {MAP_APPS.map(app => (
-                      <a key={app.name} href={app.link} target="_blank" rel="noopener noreferrer"
-                        className="flex items-start gap-2.5 p-2.5 bg-[#f8f9fa] rounded-lg border border-[#e7e7e7] hover:border-[#0071c2]/30 transition-premium">
-                        <span className="text-lg">{app.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-bold text-[#1a1a1a]">{app.name}</p>
-                          <p className="text-[11px] text-[#9ca3af]">{app.reason}</p>
-                        </div>
-                        <ExternalLink className="w-3 h-3 text-[#9ca3af] shrink-0 mt-0.5" />
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-
               {/* Halal food guide */}
               {meta.halalFoodGuide && (
                 <div className="bg-green-50 border border-green-100 rounded-2xl p-5">
@@ -447,6 +543,44 @@ export default function Planner() {
             </div>
           </div>
 
+          {/* Local apps — taxi, maps, translators that work in this city */}
+          {localApps && (
+            <div className="bg-white border border-[#e7e7e7] rounded-2xl p-6 mb-6">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <Smartphone className="w-5 h-5 text-[#0071c2]" />
+                <h3 className="text-[16px] font-black text-[#1a1a1a]">Приложения для поездки</h3>
+                <span className="text-[13px] font-bold text-[#595959]">· {localApps.country}</span>
+              </div>
+              <p className="text-[12px] text-[#9ca3af] mb-4">
+                Сервисы, которые реально работают в этом городе — установите их перед вылетом.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[
+                  { key: 'taxi',       label: 'Такси и трансфер',   emoji: '🚕', list: localApps.taxi },
+                  { key: 'maps',       label: 'Карты и навигация',  emoji: '🗺️', list: localApps.maps },
+                  { key: 'translator', label: 'Переводчики',        emoji: '🌐', list: localApps.translator },
+                ].map(group => (
+                  <div key={group.key} className="bg-[#f8f9fa] border border-[#e7e7e7] rounded-xl p-4">
+                    <p className="text-[13px] font-black text-[#1a1a1a] mb-3">{group.emoji} {group.label}</p>
+                    <div className="flex flex-col gap-2">
+                      {group.list.map(app => (
+                        <a key={app.name} href={app.link} target="_blank" rel="noopener noreferrer"
+                          className="flex items-start gap-2.5 p-2.5 bg-white rounded-lg border border-[#e7e7e7] hover:border-[#0071c2]/40 hover:shadow-sm transition-premium">
+                          <span className="text-lg shrink-0">{app.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-bold text-[#1a1a1a]">{app.name}</p>
+                            <p className="text-[11px] text-[#9ca3af] leading-snug">{app.reason}</p>
+                          </div>
+                          <ExternalLink className="w-3 h-3 text-[#9ca3af] shrink-0 mt-0.5" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Day cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {itineraries.map((dayPlan, idx) => (
@@ -459,6 +593,75 @@ export default function Planner() {
               />
             ))}
           </div>
+
+          {/* Packing checklist */}
+          {packing && (
+            <div className="bg-white border border-[#e7e7e7] rounded-2xl p-6 mb-6">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <Briefcase className="w-5 h-5 text-[#0071c2]" />
+                <h3 className="text-[16px] font-black text-[#1a1a1a]">Чек-лист сборов</h3>
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#0071c2]">{packing.seasonLabel}</span>
+              </div>
+              <p className="text-[12px] text-[#9ca3af] mb-4">Отмечайте пункты по мере сборов — список подобран под сезон и длительность поездки.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {packing.categories.map(cat => (
+                  <div key={cat.title} className="bg-[#f8f9fa] border border-[#e7e7e7] rounded-xl p-4">
+                    <p className="text-[13px] font-black text-[#1a1a1a] mb-2.5">{cat.emoji} {cat.title}</p>
+                    <div className="flex flex-col gap-1.5">
+                      {cat.items.map((it, i) => {
+                        const key = `${cat.title}-${i}`;
+                        const checked = !!packChecked[key];
+                        return (
+                          <button key={key} onClick={() => setPackChecked(p => ({ ...p, [key]: !p[key] }))}
+                            className="flex items-start gap-2 text-left group">
+                            <span className={`w-4 h-4 rounded border shrink-0 mt-0.5 flex items-center justify-center transition-premium ${
+                              checked ? 'bg-[#0071c2] border-[#0071c2]' : 'border-[#c9d1d9] group-hover:border-[#0071c2]'
+                            }`}>
+                              {checked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                            </span>
+                            <span className={`text-[12px] leading-snug ${checked ? 'text-[#9ca3af] line-through' : 'text-[#595959]'}`}>{it}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Emergency contacts */}
+          {emergency && (
+            <div className="bg-white border border-[#e7e7e7] rounded-2xl p-6 mb-6">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <Phone className="w-5 h-5 text-red-500" />
+                <h3 className="text-[16px] font-black text-[#1a1a1a]">Экстренные контакты</h3>
+                <span className="text-[15px]">{emergency.flag}</span>
+                <span className="text-[13px] font-bold text-[#595959]">{emergency.country}</span>
+              </div>
+              <p className="text-[12px] text-[#9ca3af] mb-4">Сохраните эти номера до вылета — нажмите, чтобы позвонить.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {emergency.numbers.map((n, i) => (
+                  <a key={i} href={`tel:${String(n.number).replace(/\s/g, '')}`}
+                    className="flex items-center gap-3 p-3 bg-[#f8f9fa] border border-[#e7e7e7] rounded-xl hover:border-red-300 hover:bg-red-50 transition-premium">
+                    <span className="text-xl shrink-0">{n.icon || '📞'}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-black text-[#1a1a1a] truncate">{n.service}</p>
+                      {n.note && <p className="text-[11px] text-[#9ca3af] truncate">{n.note}</p>}
+                    </div>
+                    <span className="text-[14px] font-black text-red-600 shrink-0">{n.number}</span>
+                  </a>
+                ))}
+              </div>
+              {emergency.tips?.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {emergency.tips.map((tip, i) => (
+                    <span key={i} className="text-[11px] text-[#595959] bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1">💡 {tip}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Budget summary table */}
           <div className="bg-white border border-[#e7e7e7] rounded-2xl overflow-hidden mb-6">

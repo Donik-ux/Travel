@@ -5,6 +5,7 @@ import {
   Plane, Filter, TrendingDown, ExternalLink, Search, Star, Globe, Clock,
   ArrowRight, Sparkles, Shield, BadgePercent, Headphones, ThumbsUp, MapPin,
   Sunrise, Sun, Moon, Sunset, X, Wallet, BadgeCheck,
+  Telescope, Compass, Map,
 } from 'lucide-react';
 import FlightSearch from '../features/flights/FlightSearch';
 import FlightCard from '../features/flights/FlightCard';
@@ -19,12 +20,12 @@ import { toast } from '../components/Toast';
 
 /* ── External Booking Sites ── */
 const getBookingSites = (t) => [
-  { name: 'Aviasales',     logo: '✈️', url: 'https://aviasales.ru',   desc: t('flights.sites.aviasales.desc'), badge: t('flights.sites.aviasales.badge'),     rating: 4.8 },
-  { name: 'Skyscanner',    logo: '🔍', url: 'https://skyscanner.com',  desc: t('flights.sites.skyscanner.desc'), badge: t('flights.sites.skyscanner.badge'),   rating: 4.7 },
-  { name: 'Google Flights',logo: '🌐', url: 'https://flights.google.com', desc: t('flights.sites.google.desc'),  badge: t('flights.sites.google.badge'),         rating: 4.9 },
-  { name: 'Kayak',         logo: '🛶', url: 'https://kayak.com',       desc: t('flights.sites.kayak.desc'),     badge: t('flights.sites.kayak.badge'),          rating: 4.6 },
-  { name: 'Trip.com',      logo: '🗺️', url: 'https://trip.com',        desc: t('flights.sites.trip.desc'),      badge: t('flights.sites.trip.badge'),           rating: 4.5 },
-  { name: 'Momondo',       logo: '💡', url: 'https://momondo.com',     desc: t('flights.sites.momondo.desc'),   badge: t('flights.sites.momondo.badge'),        rating: 4.5 },
+  { name: 'Aviasales',      icon: Plane,     color: '#0a7cff', url: 'https://aviasales.ru',       desc: t('flights.sites.aviasales.desc'),  badge: t('flights.sites.aviasales.badge'),  rating: 4.8 },
+  { name: 'Skyscanner',     icon: Telescope, color: '#0770e3', url: 'https://skyscanner.com',     desc: t('flights.sites.skyscanner.desc'), badge: t('flights.sites.skyscanner.badge'), rating: 4.7 },
+  { name: 'Google Flights', icon: Globe,     color: '#34a853', url: 'https://flights.google.com', desc: t('flights.sites.google.desc'),     badge: t('flights.sites.google.badge'),     rating: 4.9 },
+  { name: 'Kayak',          icon: Compass,   color: '#ff690f', url: 'https://kayak.com',          desc: t('flights.sites.kayak.desc'),      badge: t('flights.sites.kayak.badge'),      rating: 4.6 },
+  { name: 'Trip.com',       icon: Map,       color: '#287dfa', url: 'https://trip.com',           desc: t('flights.sites.trip.desc'),       badge: t('flights.sites.trip.badge'),       rating: 4.5 },
+  { name: 'Momondo',        icon: Sparkles,  color: '#e6007e', url: 'https://momondo.com',        desc: t('flights.sites.momondo.desc'),    badge: t('flights.sites.momondo.badge'),    rating: 4.5 },
 ];
 
 const POPULAR_ROUTES = [
@@ -128,7 +129,7 @@ export default function Flights() {
   const hasFilters = filter !== 'all' || airlineFilter || timeFilter || maxPrice != null;
 
   return (
-    <div className="bg-[#f5f5f5] min-h-screen -mt-[60px]">
+    <div className="bg-[#f5f5f5] min-h-screen -mt-[64px]">
 
       {/* ── HERO + SEARCH ── */}
       <section className="relative bg-[#003580] text-white pt-[100px] pb-32 md:pb-36 overflow-hidden">
@@ -496,23 +497,46 @@ export default function Flights() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {BOOKING_SITES.map((site) => (
               <a key={site.name} href={site.url} target="_blank" rel="noopener noreferrer"
-                className="bg-white border border-[#e7e7e7] hover:border-[#0071c2] rounded-2xl p-5 flex flex-col gap-3 hover:shadow-xl transition group">
-                <div className="flex items-start justify-between">
+                style={{ '--brand': site.color }}
+                className="group relative bg-white border border-[#e7e7e7] rounded-2xl p-5 flex flex-col gap-3.5 overflow-hidden hover:border-[var(--brand)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                {/* brand glow on hover */}
+                <div className="absolute -top-14 -right-14 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 blur-2xl transition-opacity duration-500 pointer-events-none"
+                  style={{ background: site.color }} />
+
+                <div className="relative flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="text-3xl">{site.logo}</div>
+                    <div className="relative w-12 h-12 rounded-[14px] flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300"
+                      style={{
+                        background: `linear-gradient(150deg, ${site.color}, ${site.color}c8)`,
+                        boxShadow: `0 6px 16px -4px ${site.color}80`,
+                      }}>
+                      {/* glossy highlight */}
+                      <div className="absolute inset-0 rounded-[14px] bg-gradient-to-b from-white/35 to-transparent" />
+                      {/* inner ring */}
+                      <div className="absolute inset-0 rounded-[14px] ring-1 ring-inset ring-white/25" />
+                      <site.icon className="relative w-[26px] h-[26px] text-white drop-shadow-sm" strokeWidth={2.2} />
+                    </div>
                     <div>
-                      <p className="text-[15px] font-black text-[#1a1a1a]">{site.name}</p>
-                      <div className="flex items-center gap-1">
+                      <p className="text-[15px] font-black text-[#1a1a1a] leading-tight">{site.name}</p>
+                      <div className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md bg-[#fff7e6]">
                         <Star className="w-3 h-3 text-[#febb02] fill-[#febb02]" />
-                        <span className="text-[11px] font-bold text-[#595959]">{site.rating}</span>
+                        <span className="text-[11px] font-black text-[#a45e00]">{site.rating}</span>
                       </div>
                     </div>
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-wider bg-[#febb02] text-[#1a1a1a] px-2 py-1 rounded">{site.badge}</span>
+                  <span className="text-[9px] font-black uppercase tracking-wider bg-[#febb02] text-[#1a1a1a] px-2 py-1 rounded-md shrink-0">{site.badge}</span>
                 </div>
-                <p className="text-[13px] text-[#595959] leading-relaxed flex-1">{site.desc}</p>
-                <div className="flex items-center gap-1.5 text-[#0071c2] text-[12px] font-black group-hover:gap-2.5 transition-all">
-                  {t('flights.searchOn') || 'Search on'} {site.name} <ExternalLink className="w-3.5 h-3.5" />
+
+                <p className="relative text-[13px] text-[#595959] leading-relaxed flex-1">{site.desc}</p>
+
+                <div className="relative flex items-center justify-between pt-3 border-t border-[#f0f0f0]">
+                  <span className="text-[12px] font-black" style={{ color: site.color }}>
+                    {t('flights.searchOn') || 'Search on'} {site.name}
+                  </span>
+                  <span className="w-7 h-7 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:translate-x-0.5 transition-transform duration-300"
+                    style={{ background: site.color }}>
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
                 </div>
               </a>
             ))}

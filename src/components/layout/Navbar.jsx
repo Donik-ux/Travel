@@ -35,10 +35,11 @@ export default function Navbar() {
   }, []);
 
   const links = [
-    { to: '/',             label: t('nav.home')    },
-    { to: '/flights',      label: t('nav.flights') },
-    { to: '/hot-tours',    label: '🔥 Hot Tours'   },
-    { to: '/exotic-tours', label: t('nav.exotic')  },
+    { to: '/',             label: t('nav.home')            },
+    { to: '/where-to-go',  label: t('nav2.whereToGo')      },
+    { to: '/flights',      label: t('nav.flights')         },
+    { to: '/hot-tours',    label: t('nav2.hotTours')       },
+    { to: '/exotic-tours', label: t('nav.exotic')          },
   ];
 
   const handleLogout = () => { logout(); navigate('/'); setUserOpen(false); };
@@ -144,7 +145,7 @@ export default function Navbar() {
                     )}
                     <button onClick={() => { navigate('/dashboard'); setUserOpen(false); }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-[13px] font-semibold text-sky-300 hover:bg-white/[0.06] border-b border-white/10 transition-premium">
-                      <LayoutDashboard className="w-4 h-4" /> My Dashboard
+                      <LayoutDashboard className="w-4 h-4" /> {t('nav2.myDashboard')}
                     </button>
                     <button onClick={() => { navigate('/profile'); setUserOpen(false); }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-[13px] font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white transition-premium">
@@ -152,11 +153,11 @@ export default function Navbar() {
                     </button>
                     <button onClick={() => { navigate('/my-plans'); setUserOpen(false); }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-[13px] font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white transition-premium">
-                      <Map className="w-4 h-4" /> My Trip Plans
+                      <Map className="w-4 h-4" /> {t('nav2.myTripPlans')}
                     </button>
                     <button onClick={() => { navigate('/wishlist'); setUserOpen(false); }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-[13px] font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white transition-premium">
-                      <Heart className="w-4 h-4" /> My Wishlist
+                      <Heart className="w-4 h-4" /> {t('nav2.myWishlist')}
                     </button>
                     <button onClick={() => { navigate('/my-bookings'); setUserOpen(false); }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-[13px] font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white transition-premium">
@@ -208,7 +209,7 @@ export default function Navbar() {
               </button>
               <button onClick={() => { navigate('/my-plans'); setMobileOpen(false); }}
                 className="py-3.5 px-4 rounded-lg text-[14px] font-semibold text-white/75 border-b border-white/10 text-left flex items-center gap-2">
-                <Map className="w-4 h-4" /> My Trip Plans
+                <Map className="w-4 h-4" /> {t('nav2.myTripPlans')}
               </button>
               <button onClick={() => { navigate('/my-bookings'); setMobileOpen(false); }}
                 className="py-3.5 px-4 rounded-lg text-[14px] font-semibold text-white/75 border-b border-white/10 text-left flex items-center gap-2">

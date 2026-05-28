@@ -8,26 +8,28 @@ import {
 } from 'lucide-react';
 import { getTourById } from '../data/exoticTours';
 import useSEO from '../hooks/useSEO';
+import { useTranslation } from '../store/useLangStore';
 
 const parsePrice = (s) => Number(String(s || '').replace(/[^\d]/g, '')) || 0;
 
 const COST_SPLIT = [
-  { label: 'Перелёты',                emoji: '✈️', pct: 0.30 },
-  { label: 'Проживание',              emoji: '🏨', pct: 0.28 },
-  { label: 'Экспедиция и активности',  emoji: '🧭', pct: 0.27 },
-  { label: 'Питание',                 emoji: '🍽️', pct: 0.10 },
-  { label: 'Трансферы',               emoji: '🚐', pct: 0.05 },
+  { labelKey: 'costFlights',    emoji: '✈️', pct: 0.30 },
+  { labelKey: 'costStay',       emoji: '🏨', pct: 0.28 },
+  { labelKey: 'costExpedition', emoji: '🧭', pct: 0.27 },
+  { labelKey: 'costFood',       emoji: '🍽️', pct: 0.10 },
+  { labelKey: 'costTransfers',  emoji: '🚐', pct: 0.05 },
 ];
 
 const REVIEWS = [
-  { name: 'Aizada K.',   initials: 'AK', rating: 5, when: '2 недели назад', text: 'Невероятный контраст — за одну поездку увидели два совершенно разных мира. Организация на высоте, гид всегда на связи.' },
-  { name: 'Marat T.',    initials: 'MT', rating: 5, when: 'месяц назад',     text: 'Бюджет рассчитали честно, без скрытых доплат. AI-план поездки реально помог — каждый день был расписан.' },
-  { name: 'Elena V.',    initials: 'EV', rating: 4, when: '2 месяца назад',  text: 'Поездка мечты. Единственное — хотелось бы на день больше в первой точке маршрута. В остальном идеально.' },
+  { name: 'Aizada K.',   initials: 'AK', rating: 5, whenKey: 'reviewWhen1', textKey: 'reviewText1' },
+  { name: 'Marat T.',    initials: 'MT', rating: 5, whenKey: 'reviewWhen2', textKey: 'reviewText2' },
+  { name: 'Elena V.',    initials: 'EV', rating: 4, whenKey: 'reviewWhen3', textKey: 'reviewText3' },
 ];
 
 export default function TourDetail() {
   const { id }   = useParams();
   const navigate = useNavigate();
+  const { t }    = useTranslation();
   const tour     = getTourById(id);
 
   useSEO({
@@ -44,11 +46,13 @@ export default function TourDetail() {
   if (!tour) {
     return (
       <div className="min-h-screen bg-[#f8f9fa] flex flex-col items-center justify-center text-center px-6">
-        <Compass className="w-14 h-14 text-[#c9d1d9] mb-4" />
-        <h1 className="text-2xl font-black text-[#1a1a1a] mb-2">Тур не найден</h1>
-        <p className="text-[#595959] mb-6">Возможно, ссылка устарела или тур больше недоступен.</p>
-        <Link to="/exotic-tours" className="px-5 py-3 rounded-xl bg-[#003580] text-white font-black text-[13px]">
-          Все экзотические туры
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#0071c2]/15 to-[#003580]/10 flex items-center justify-center mb-5 animate-float">
+          <Compass className="w-10 h-10 text-[#0071c2]" />
+        </div>
+        <h1 className="text-2xl font-black text-[#1a1a1a] mb-2">{t('tourDetail.notFoundTitle')}</h1>
+        <p className="text-[#595959] mb-6">{t('tourDetail.notFoundSub')}</p>
+        <Link to="/exotic-tours" className="px-5 py-3 rounded-xl bg-[#003580] text-white font-black text-[13px] shadow-soft transition hover:bg-[#0071c2] active:scale-95">
+          {t('tourDetail.allExoticTours')}
         </Link>
       </div>
     );
@@ -62,10 +66,10 @@ export default function TourDetail() {
   const fmt = (n) => '€' + Number(n || 0).toLocaleString();
 
   const savingTips = !fits ? [
-    `Не хватает ${fmt(Math.abs(diff))} — это ${fmt(Math.ceil(Math.abs(diff) / Math.max(1, travelers)))} на человека.`,
-    travelers > 2 && `Поехать вдвоём вместо ${travelers} — выйдет ${fmt(pricePer * 2)} вместо ${fmt(tourTotal)}.`,
-    'Бронирование вне пикового сезона снижает цену на 15–25%.',
-    'Туры на 7–10 дней заметно дешевле длинных экспедиций.',
+    `${t('tourDetail.tipShortBy1')} ${fmt(Math.abs(diff))} — ${t('tourDetail.tipShortBy2')} ${fmt(Math.ceil(Math.abs(diff) / Math.max(1, travelers)))} ${t('tourDetail.tipShortBy3')}`,
+    travelers > 2 && `${t('tourDetail.tipTravelDuoA')} ${travelers} ${t('tourDetail.tipTravelDuoB')} ${fmt(pricePer * 2)} ${t('tourDetail.tipTravelDuoC')} ${fmt(tourTotal)}.`,
+    t('tourDetail.tipOffPeak'),
+    t('tourDetail.tipShorterTours'),
   ].filter(Boolean) : [];
 
   const handleGenerate = () => {
@@ -89,14 +93,19 @@ export default function TourDetail() {
 
       {/* Hero */}
       <div className="relative h-[400px] md:h-[460px] overflow-hidden">
-        <img src={tour.image} alt={tour.title} className="w-full h-full object-cover" />
+        <motion.img
+          src={tour.image} alt={tour.title}
+          initial={{ scale: 1.08 }} animate={{ scale: 1 }}
+          transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
+          className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#001a3d] via-[#001a3d]/45 to-[#001a3d]/25" />
+        <div className="absolute top-8 right-[10%] w-56 h-56 rounded-full bg-[#febb02]/10 blur-3xl pointer-events-none animate-float" />
 
         <div className="absolute inset-0 max-w-7xl mx-auto px-6 md:px-12 flex flex-col">
           {/* Back */}
           <button onClick={() => navigate('/exotic-tours')}
             className="self-start mt-6 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-[12px] font-bold backdrop-blur-sm transition active:scale-95">
-            <ArrowLeft className="w-4 h-4" /> Все туры
+            <ArrowLeft className="w-4 h-4" /> {t('tourDetail.backAllTours')}
           </button>
 
           {/* Hero content */}
@@ -119,9 +128,9 @@ export default function TourDetail() {
                 <Plane className="w-3.5 h-3.5 rotate-45 text-white/60" />
                 {tour.to.city} {tour.to.flag}
               </span>
-              <span className="flex items-center gap-1.5 text-[13px] font-bold"><Clock className="w-4 h-4 text-white/60" />{tour.days} дней</span>
+              <span className="flex items-center gap-1.5 text-[13px] font-bold"><Clock className="w-4 h-4 text-white/60" />{tour.days} {t('tourDetail.daysSuffix')}</span>
               <span className="flex items-center gap-1.5 text-[13px] font-bold"><Star className="w-4 h-4 fill-[#febb02] text-[#febb02]" />{tour.rating} ({tour.reviews})</span>
-              <span className="flex items-center gap-1.5 text-[13px] font-bold"><Users className="w-4 h-4 text-white/60" />{tour.groupSize} чел.</span>
+              <span className="flex items-center gap-1.5 text-[13px] font-bold"><Users className="w-4 h-4 text-white/60" />{tour.groupSize} {t('tourDetail.peopleSuffix')}</span>
             </div>
           </motion.div>
         </div>
@@ -135,13 +144,13 @@ export default function TourDetail() {
 
           {/* About */}
           <section>
-            <h2 className="text-[20px] font-black text-[#1a1a1a] mb-3">О путешествии</h2>
+            <h2 className="text-[20px] font-black text-[#1a1a1a] mb-3">{t('tourDetail.aboutTitle')}</h2>
             <p className="text-[14px] text-[#595959] leading-relaxed">{tour.desc}</p>
           </section>
 
           {/* Temperature contrast */}
-          <section className="bg-white border border-[#e7e7e7] rounded-2xl p-6">
-            <h2 className="text-[15px] font-black text-[#1a1a1a] mb-4">Контраст маршрута</h2>
+          <section className="bg-white border border-[#e7e7e7] rounded-2xl p-6 shadow-soft">
+            <h2 className="text-[15px] font-black text-[#1a1a1a] mb-4">{t('tourDetail.contrastTitle')}</h2>
             <div className="flex items-center gap-3">
               <div className="flex-1 text-center">
                 <div className="text-[32px] leading-none mb-1">{tour.from.icon}</div>
@@ -152,7 +161,7 @@ export default function TourDetail() {
               <div className="flex flex-col items-center gap-1 shrink-0">
                 <Plane className="w-5 h-5 text-[#0071c2] rotate-45" />
                 <div className="w-24 h-[3px] rounded-full bg-gradient-to-r from-orange-400 to-blue-400" />
-                <span className="text-[10px] font-bold text-[#9ca3af]">{tour.days} дней</span>
+                <span className="text-[10px] font-bold text-[#9ca3af]">{tour.days} {t('tourDetail.contrastDays')}</span>
               </div>
               <div className="flex-1 text-center">
                 <div className="text-[32px] leading-none mb-1">{tour.to.icon}</div>
@@ -165,31 +174,38 @@ export default function TourDetail() {
 
           {/* Highlights / itinerary */}
           <section>
-            <h2 className="text-[20px] font-black text-[#1a1a1a] mb-4">Что входит в маршрут</h2>
+            <h2 className="text-[20px] font-black text-[#1a1a1a] mb-4">{t('tourDetail.itineraryTitle')}</h2>
             <div className="space-y-2.5">
               {tour.highlights.map((h, i) => (
-                <div key={i} className="flex items-center gap-3 bg-white border border-[#e7e7e7] rounded-xl p-3.5">
-                  <span className="w-7 h-7 rounded-lg bg-[#003580] text-white text-[12px] font-black flex items-center justify-center shrink-0">
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -12 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.28, delay: i * 0.05, ease: [0.4, 0, 0.2, 1] }}
+                  className="flex items-center gap-3 bg-white border border-[#e7e7e7] rounded-xl p-3.5 shadow-soft transition-colors hover:border-[#0071c2]/40"
+                >
+                  <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0071c2] to-[#003580] text-white text-[12px] font-black flex items-center justify-center shrink-0 shadow-sm">
                     {i + 1}
                   </span>
                   <span className="text-[14px] font-semibold text-[#1a1a1a]">{h}</span>
                   <Check className="w-4 h-4 text-green-600 ml-auto shrink-0" strokeWidth={3} />
-                </div>
+                </motion.div>
               ))}
             </div>
           </section>
 
           {/* Reviews */}
-          <section className="bg-white border border-[#e7e7e7] rounded-2xl p-6">
+          <section className="bg-white border border-[#e7e7e7] rounded-2xl p-6 shadow-soft">
             <div className="flex items-center gap-4 mb-5">
               <div className="text-center shrink-0">
-                <div className="text-[40px] font-black text-[#003580] leading-none">{tour.rating}</div>
+                <div className="text-[40px] font-black text-gradient leading-none">{tour.rating}</div>
                 <div className="flex items-center gap-0.5 justify-center mt-1">
                   {[1, 2, 3, 4, 5].map(n => (
                     <Star key={n} className={`w-3.5 h-3.5 ${n <= Math.round(tour.rating) ? 'fill-[#febb02] text-[#febb02]' : 'text-[#e7e7e7]'}`} />
                   ))}
                 </div>
-                <div className="text-[11px] text-[#9ca3af] mt-1">{tour.reviews} отзывов</div>
+                <div className="text-[11px] text-[#9ca3af] mt-1">{tour.reviews} {t('tourDetail.reviewsCount')}</div>
               </div>
               <div className="flex-1 space-y-1">
                 {[5, 4, 3, 2, 1].map(stars => {
@@ -219,11 +235,11 @@ export default function TourDetail() {
                           <Star key={n} className={`w-3 h-3 ${n <= r.rating ? 'fill-[#febb02] text-[#febb02]' : 'text-[#e7e7e7]'}`} />
                         ))}
                       </span>
-                      <span className="text-[11px] text-[#9ca3af] ml-auto">{r.when}</span>
+                      <span className="text-[11px] text-[#9ca3af] ml-auto">{t(`tourDetail.${r.whenKey}`)}</span>
                     </div>
                     <p className="text-[13px] text-[#595959] leading-relaxed mt-0.5 flex gap-1.5">
                       <Quote className="w-3.5 h-3.5 text-[#c9d1d9] shrink-0 mt-0.5" />
-                      {r.text}
+                      {t(`tourDetail.${r.textKey}`)}
                     </p>
                   </div>
                 </div>
@@ -234,11 +250,11 @@ export default function TourDetail() {
 
         {/* ── Right: budget calculator ── */}
         <div className="lg:col-span-1">
-          <div className="lg:sticky lg:top-[80px] bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-sm">
+          <div className="lg:sticky lg:top-[80px] bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-float">
             <div className="flex items-baseline justify-between mb-4">
               <div>
-                <div className="text-[10px] text-[#9ca3af] font-bold uppercase tracking-wider">Цена за человека</div>
-                <div className="text-[26px] font-black text-[#003580] leading-none">{tour.price}</div>
+                <div className="text-[10px] text-[#9ca3af] font-bold uppercase tracking-wider">{t('tourDetail.pricePerPerson')}</div>
+                <div className="text-[26px] font-black text-gradient leading-none">{tour.price}</div>
               </div>
               <div className="flex items-center gap-1 text-[12px] font-bold text-[#595959]">
                 <Star className="w-3.5 h-3.5 fill-[#febb02] text-[#febb02]" />{tour.rating}
@@ -246,13 +262,13 @@ export default function TourDetail() {
             </div>
 
             <p className="text-[12px] text-[#9ca3af] mb-4">
-              Укажите бюджет и даты — проверим, хватает ли, и AI составит план по дням.
+              {t('tourDetail.calcIntro')}
             </p>
 
             {/* Travelers */}
             <div className="flex items-center justify-between mb-3">
               <span className="flex items-center gap-2 text-[13px] font-bold text-[#1a1a1a]">
-                <Users className="w-4 h-4 text-[#0071c2]" /> Путешественников
+                <Users className="w-4 h-4 text-[#0071c2]" /> {t('tourDetail.travelers')}
               </span>
               <div className="flex items-center gap-3">
                 <button onClick={() => setTravelers(v => Math.max(1, v - 1))}
@@ -270,7 +286,7 @@ export default function TourDetail() {
             {/* Budget + date */}
             <label className="block mb-3">
               <span className="flex items-center gap-1.5 text-[12px] font-bold text-[#1a1a1a] mb-1.5">
-                <Wallet className="w-3.5 h-3.5 text-[#0071c2]" /> Ваш общий бюджет
+                <Wallet className="w-3.5 h-3.5 text-[#0071c2]" /> {t('tourDetail.totalBudget')}
               </span>
               <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-[#e7e7e7] focus-within:border-[#0071c2] transition">
                 <span className="text-[15px] font-black text-[#595959]">€</span>
@@ -281,7 +297,7 @@ export default function TourDetail() {
             </label>
             <label className="block mb-4">
               <span className="flex items-center gap-1.5 text-[12px] font-bold text-[#1a1a1a] mb-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#0071c2]" /> Дата вылета
+                <Calendar className="w-3.5 h-3.5 text-[#0071c2]" /> {t('tourDetail.departureDate')}
               </span>
               <input type="date" min={today} value={date}
                 onChange={e => setDate(e.target.value)}
@@ -298,10 +314,12 @@ export default function TourDetail() {
                   : <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />}
                 <div className="flex-1">
                   <p className={`text-[13px] font-black ${fits ? 'text-green-800' : 'text-amber-800'}`}>
-                    {fits ? `✅ Бюджета хватает — остаётся ${fmt(diff)}` : `⚠️ Не хватает ${fmt(Math.abs(diff))}`}
+                    {fits
+                      ? `${t('tourDetail.budgetEnoughPrefix')} ${fmt(diff)} ${t('tourDetail.budgetEnoughSuffix')}`
+                      : `${t('tourDetail.budgetShortPrefix')} ${fmt(Math.abs(diff))}`}
                   </p>
                   <p className={`text-[11px] ${fits ? 'text-green-700' : 'text-amber-700'}`}>
-                    Тур: {fmt(pricePer)} × {travelers} = <b>{fmt(tourTotal)}</b>
+                    {t('tourDetail.tourLineLabel')} {fmt(pricePer)} × {travelers} = <b>{fmt(tourTotal)}</b>
                   </p>
                 </div>
               </div>
@@ -312,12 +330,12 @@ export default function TourDetail() {
             </div>
 
             {/* Breakdown */}
-            <p className="text-[11px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">Из чего цена</p>
+            <p className="text-[11px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">{t('tourDetail.priceBreakdownTitle')}</p>
             <div className="space-y-1.5 mb-4">
               {breakdown.map(b => (
-                <div key={b.label} className="flex items-center gap-2">
+                <div key={b.labelKey} className="flex items-center gap-2">
                   <span className="text-[13px] w-5 text-center">{b.emoji}</span>
-                  <span className="text-[11px] text-[#595959] flex-1 truncate">{b.label}</span>
+                  <span className="text-[11px] text-[#595959] flex-1 truncate">{t(`tourDetail.${b.labelKey}`)}</span>
                   <span className="text-[12px] font-black text-[#1a1a1a]">{fmt(b.amount)}</span>
                 </div>
               ))}
@@ -327,7 +345,7 @@ export default function TourDetail() {
             {savingTips.length > 0 && (
               <div className="bg-[#fff7e6] border border-[#ffd76e] rounded-xl p-3.5 mb-4">
                 <p className="flex items-center gap-1.5 text-[12px] font-black text-[#a45e00] mb-1.5">
-                  <Lightbulb className="w-4 h-4" /> Как уложиться в бюджет
+                  <Lightbulb className="w-4 h-4" /> {t('tourDetail.savingTipsTitle')}
                 </p>
                 <ul className="space-y-1">
                   {savingTips.map((tip, i) => (
@@ -341,12 +359,12 @@ export default function TourDetail() {
 
             {/* CTA */}
             <button onClick={handleGenerate}
-              className="w-full py-3.5 rounded-xl bg-[#003580] text-white font-black text-[13px] flex items-center justify-center gap-2 hover:bg-[#0071c2] transition active:scale-[0.98]">
-              <Sparkles className="w-4 h-4" /> Составить AI-план поездки
+              className="btn-gold w-full py-3.5 rounded-xl text-[13px] flex items-center justify-center gap-2">
+              <Sparkles className="w-4 h-4" /> {t('tourDetail.generateBtn')}
               <ArrowRight className="w-4 h-4" />
             </button>
             <p className="text-[10px] text-[#9ca3af] text-center mt-2 flex items-center justify-center gap-1">
-              <MapPin className="w-3 h-3" /> План по дням для {tour.to.city} под ваш бюджет
+              <MapPin className="w-3 h-3" /> {t('tourDetail.dayPlanFor1')} {tour.to.city} {t('tourDetail.dayPlanFor2')}
             </p>
           </div>
         </div>

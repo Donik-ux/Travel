@@ -49,13 +49,13 @@ const DestinationModal = ({ destination, onClose }) => {
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md"
       style={{ opacity: 0, transition: 'opacity 0.3s ease' }}
     >
       <div className="absolute inset-0 flex items-end md:items-center justify-center p-0 md:p-6">
         <div
           ref={panelRef}
-          className="relative w-full md:max-w-3xl max-h-[95vh] md:max-h-[90vh] bg-[#0D0D0D] border border-white/[0.09] rounded-t-[28px] md:rounded-[28px] overflow-hidden flex flex-col shadow-[0_32px_80px_rgba(0,0,0,0.8)]"
+          className="relative w-full md:max-w-3xl max-h-[95vh] md:max-h-[90vh] bg-[#0D0D0D] border border-white/[0.1] ring-1 ring-inset ring-white/[0.03] rounded-t-[28px] md:rounded-[28px] overflow-hidden flex flex-col shadow-[0_40px_100px_rgba(0,0,0,0.85)]"
           style={{ transform: 'translateY(100%)', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' }}
         >
           {/* ─── HERO IMAGE ─── */}
@@ -70,7 +70,8 @@ const DestinationModal = ({ destination, onClose }) => {
 
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-black/75 transition-premium active:scale-90"
+              aria-label="Close"
+              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/45 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/90 hover:text-white hover:bg-black/70 hover:rotate-90 transition-premium active:scale-90"
             >
               <X className="w-4 h-4" />
             </button>
@@ -90,7 +91,7 @@ const DestinationModal = ({ destination, onClose }) => {
                   <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/35 mb-0.5">
                     {t('home.flightsFrom')}
                   </div>
-                  <div className="text-[26px] font-black text-white leading-none">{destination.from}</div>
+                  <div className="text-[26px] font-black text-gradient-gold leading-none">{destination.from}</div>
                 </div>
               </div>
             </div>
@@ -110,9 +111,9 @@ const DestinationModal = ({ destination, onClose }) => {
                 { icon: Users,    label: t('modal.population'),  value: destination.stats.population },
                 { icon: Clock,    label: t('modal.currency'),    value: destination.stats.currency   },
               ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-4">
+                <div key={label} className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-4 hover:bg-white/[0.06] hover:border-white/[0.1] transition-premium">
                   <div className="flex items-center gap-1.5 mb-2">
-                    <Icon className="w-3 h-3 text-white/25" />
+                    <Icon className="w-3 h-3 text-[#febb02]/70" />
                     <span className="text-[9px] font-black uppercase tracking-[0.18em] text-white/25">{label}</span>
                   </div>
                   <div className="text-[12px] font-bold text-white/70 leading-tight">{value}</div>
@@ -131,7 +132,7 @@ const DestinationModal = ({ destination, onClose }) => {
                     key={title}
                     className="group flex items-start gap-4 bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 hover:border-white/[0.14] hover:bg-white/[0.06] transition-premium"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.07] flex items-center justify-center text-[18px] shrink-0 transition-premium group-hover:scale-110">
+                    <div className="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.07] flex items-center justify-center text-[18px] shrink-0 transition-premium group-hover:scale-110 group-hover:border-[#febb02]/30 group-hover:bg-[#febb02]/[0.08]">
                       {icon}
                     </div>
                     <div>
@@ -164,17 +165,17 @@ const DestinationModal = ({ destination, onClose }) => {
           </div>
 
           {/* ─── FOOTER CTAs ─── */}
-          <div className="shrink-0 border-t border-white/[0.06] px-7 py-5 flex gap-3 bg-[#0D0D0D]">
+          <div className="shrink-0 border-t border-white/[0.06] px-7 py-5 flex gap-3 bg-[#0D0D0D]/95 backdrop-blur-sm">
             <button
               onClick={handlePlan}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-white text-[#0A0A0A] text-[11px] font-black uppercase tracking-[0.14em] hover:bg-white/90 hover:scale-[1.02] transition-premium active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.12)]"
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-white text-[#0A0A0A] text-[11px] font-black uppercase tracking-[0.14em] hover:bg-white/95 hover:scale-[1.02] hover:-translate-y-0.5 transition-premium active:scale-95 shadow-[0_8px_24px_-6px_rgba(255,255,255,0.25)]"
             >
               <MapPin className="w-3.5 h-3.5" />
               {t('home.planTrip')}
             </button>
             <button
               onClick={handleFlights}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-white/[0.07] border border-white/[0.1] text-white text-[11px] font-black uppercase tracking-[0.14em] hover:bg-white/[0.12] hover:border-white/[0.2] hover:scale-[1.02] transition-premium active:scale-95"
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-white/[0.07] border border-white/[0.1] text-white text-[11px] font-black uppercase tracking-[0.14em] hover:bg-white/[0.12] hover:border-white/[0.2] hover:scale-[1.02] hover:-translate-y-0.5 transition-premium active:scale-95"
             >
               <Plane className="w-3.5 h-3.5" />
               {t('home.searchFlights')}

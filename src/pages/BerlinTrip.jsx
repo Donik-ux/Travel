@@ -288,11 +288,11 @@ const BerlinTrip = () => {
               className="flex items-center gap-2 text-white/40 hover:text-white text-[12px] font-bold uppercase tracking-[0.14em] mb-6 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              Back
+              {t('berlinTrip.back')}
             </button>
-            <div className="flex items-center gap-2 mb-3">
-              <Calendar className="w-4 h-4 text-white/40" />
-              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">
+            <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-[#febb02] text-[#1a1a1a] shadow-[0_4px_14px_rgba(245,185,66,0.35)]">
+              <Calendar className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">
                 {t('berlin.dates')} · {t('berlin.days')}
               </span>
             </div>
@@ -306,20 +306,20 @@ const BerlinTrip = () => {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <button
                 onClick={handleCopyItinerary}
-                className="inline-flex items-center gap-2 rounded-full bg-white text-[#0A0A0A] px-5 py-3 text-[12px] font-black uppercase tracking-[0.14em] hover:bg-white/90 transition-all"
+                className="btn-gold inline-flex items-center gap-2 rounded-full px-6 py-3 text-[12px] uppercase tracking-[0.14em]"
               >
                 <Copy className="w-4 h-4" />
                 {t('berlin.copy')}
               </button>
               <button
                 onClick={handleDownloadItinerary}
-                className="inline-flex items-center gap-2 rounded-full bg-white/[0.1] border border-white/[0.14] text-white px-5 py-3 text-[12px] font-black uppercase tracking-[0.14em] hover:bg-white/[0.15] transition-all"
+                className="inline-flex items-center gap-2 rounded-full glass-dark border border-white/[0.16] text-white px-6 py-3 text-[12px] font-black uppercase tracking-[0.14em] hover:border-white/30 transition-all"
               >
                 <Download className="w-4 h-4" />
                 {t('berlin.download')}
               </button>
               {copyStatus && (
-                <span className="text-[12px] text-green-300">{copyStatus}</span>
+                <span className="text-[12px] font-bold text-green-300">{copyStatus}</span>
               )}
             </div>
           </div>
@@ -334,8 +334,11 @@ const BerlinTrip = () => {
             { label: t('berlin.datesLabel'), title: t('berlin.dates'), sub: t('berlin.datesSub') },
             { label: t('berlin.routeLabel'), title: t('berlin.route'), sub: t('berlin.routeSub') },
           ].map((c) => (
-            <div key={c.label} className="bg-[#111111] border border-white/[0.08] rounded-3xl p-6 shadow-[0_32px_80px_rgba(0,0,0,0.25)]">
-              <div className="text-[10px] font-black uppercase tracking-[0.25em] text-white/30 mb-3">{c.label}</div>
+            <div key={c.label} className="group bg-gradient-to-b from-[#141414] to-[#0f0f0f] border border-white/[0.08] rounded-3xl p-6 shadow-[0_32px_80px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-1 hover:border-[#febb02]/30">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#febb02]" />
+                <div className="text-[10px] font-black uppercase tracking-[0.25em] text-white/30">{c.label}</div>
+              </div>
               <div className="text-[20px] font-black text-white">{c.title}</div>
               <p className="mt-3 text-[13px] text-white/60 leading-relaxed">{c.sub}</p>
             </div>
@@ -400,7 +403,7 @@ const BerlinTrip = () => {
                       : 'text-white/50 border-white/20 hover:border-white/40 hover:text-white'
                   }`}
                 >
-                  Day {d}
+                  {t('berlinTrip.day')} {d}
                 </button>
               ))}
             </div>
@@ -429,7 +432,7 @@ const BerlinTrip = () => {
                         <div style={{ minWidth: 180 }}>
                           <div style={{ fontSize: 18, marginBottom: 4 }}>{loc.emoji} <strong>{loc.name}</strong></div>
                           <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>{loc.address}</div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#003580' }}>Day {loc.day} · {loc.price}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: '#003580' }}>{t('berlinTrip.day')} {loc.day} · {loc.price}</div>
                         </div>
                       </Popup>
                     </Marker>
@@ -444,7 +447,7 @@ const BerlinTrip = () => {
                 </div>
                 <div className="space-y-3">
                   {filteredLocations.map((loc, i) => (
-                    <div key={loc.name} className="flex gap-3 p-3 rounded-xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.07] transition-all">
+                    <div key={loc.name} className="flex gap-3 p-3 rounded-xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.12] transition-all">
                       <div
                         className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black shrink-0 mt-0.5"
                         style={{ background: DAY_COLOR_HEX[loc.day] || '#0071c2' }}
@@ -456,7 +459,7 @@ const BerlinTrip = () => {
                         <div className="text-[11px] text-white/40 mt-0.5 truncate">{loc.address}</div>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/[0.07] text-white/50">
-                            Day {loc.day}
+                            {t('berlinTrip.day')} {loc.day}
                           </span>
                           <span className="text-[10px] text-green-400">{loc.price}</span>
                         </div>
@@ -477,13 +480,17 @@ const BerlinTrip = () => {
 
             {/* Budget + Tips */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              <div className="lg:col-span-2 relative bg-[#111111] border border-white/[0.07] rounded-2xl p-8 overflow-hidden">
+              <div className="lg:col-span-2 relative bg-gradient-to-br from-[#141414] to-[#0e0e0e] border border-white/[0.07] rounded-2xl p-8 overflow-hidden">
+                <div className="absolute -top-24 -right-20 w-64 h-64 rounded-full bg-[#febb02]/[0.06] blur-3xl pointer-events-none" />
                 <div className="relative z-10">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
                     <div>
-                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/25 mb-1">{t('berlin.budget')}</div>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Wallet className="w-3.5 h-3.5 text-[#febb02]" />
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">{t('berlin.budget')}</div>
+                      </div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-[32px] font-black text-white leading-none">${BUDGET.total.toLocaleString()}</span>
+                        <span className="text-[36px] font-black text-gradient-gold leading-none">${BUDGET.total.toLocaleString()}</span>
                         <span className="text-[13px] text-white/30">{t('berlin.estimated')}</span>
                       </div>
                     </div>
@@ -525,15 +532,16 @@ const BerlinTrip = () => {
                 {ITINERARY.map((dayPlan) => (
                   <div
                     key={dayPlan.day}
-                    className="relative bg-[#111111] border border-white/[0.07] rounded-2xl p-7 shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+                    className="group relative bg-gradient-to-b from-[#141414] to-[#0f0f0f] border border-white/[0.07] rounded-2xl p-7 pl-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-white/[0.14] hover:shadow-[0_18px_48px_rgba(0,0,0,0.55)]"
                   >
+                    <span className={`absolute left-0 top-0 bottom-0 w-1 ${DAY_COLORS[dayPlan.day] || 'bg-gray-500'} opacity-70 group-hover:opacity-100 transition-opacity`} />
                     <div className="flex flex-col gap-2 mb-5">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${DAY_COLORS[dayPlan.day] || 'bg-gray-500'}`} />
-                        <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/30">Day {dayPlan.day}</div>
+                      <div className="flex items-center gap-2.5">
+                        <span className={`flex items-center justify-center w-8 h-8 rounded-lg text-white text-[12px] font-black shrink-0 ${DAY_COLORS[dayPlan.day] || 'bg-gray-500'}`}>{dayPlan.day}</span>
+                        <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white/40">{t('berlinTrip.day')} {dayPlan.day}</div>
                       </div>
                       <div className="text-[13px] font-semibold text-white/70">{dayPlan.date}</div>
-                      <div className="text-[14px] font-bold text-white mt-2">{dayPlan.title}</div>
+                      <div className="text-[15px] font-bold text-white mt-1">{dayPlan.title}</div>
                     </div>
                     <ul className="space-y-3">
                       {dayPlan.items.map((item, index) => {
@@ -555,11 +563,13 @@ const BerlinTrip = () => {
 
             {/* Total cost */}
             <div className="flex justify-center pb-8">
-              <div className="inline-flex items-center gap-4 px-8 py-4 rounded-2xl bg-[#111111] border border-white/[0.07]">
-                <Wallet className="w-5 h-5 text-white/25" />
+              <div className="inline-flex items-center gap-4 px-9 py-4 rounded-2xl bg-gradient-to-br from-[#141414] to-[#0e0e0e] border border-[#febb02]/20 shadow-[0_12px_40px_rgba(0,0,0,0.4)]">
+                <div className="w-10 h-10 rounded-xl bg-[#febb02]/10 flex items-center justify-center">
+                  <Wallet className="w-5 h-5 text-[#febb02]" />
+                </div>
                 <div>
-                  <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/25">{t('berlin.totalCost')}</div>
-                  <div className="text-[24px] font-black text-white leading-tight">~${BUDGET.total.toLocaleString()}</div>
+                  <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">{t('berlin.totalCost')}</div>
+                  <div className="text-[26px] font-black text-gradient-gold leading-tight">~${BUDGET.total.toLocaleString()}</div>
                 </div>
               </div>
             </div>

@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, Plane, Package, Hotel, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useAdminStore from '../../store/useAdminStore';
+import { useTranslation } from '../../store/useLangStore';
 
 export default function GlobalSearch() {
+  const { t } = useTranslation();
   const [open, setOpen]   = useState(false);
   const [query, setQuery] = useState('');
   const inputRef          = useRef(null);
@@ -43,10 +45,7 @@ export default function GlobalSearch() {
       <button onClick={() => setOpen(true)}
         className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/15 bg-white/[0.07] hover:bg-white/15 hover:border-[#f5b942]/40 transition-all text-white/55 text-sm">
         <Search className="w-4 h-4" />
-        <span className="hidden sm:block text-[12px]">Search flights…</span>
-        <kbd className="hidden sm:flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 border border-white/15 text-white/45">
-          ⌘K
-        </kbd>
+        <span className="hidden sm:block text-[12px]">{t('ui.search.trigger')}</span>
       </button>
 
       {/* Modal Overlay */}
@@ -62,7 +61,7 @@ export default function GlobalSearch() {
                 ref={inputRef}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                placeholder="Search flights, airlines, routes…"
+                placeholder={t('ui.search.placeholder')}
                 className="flex-1 text-[15px] text-[#1a1a1a] outline-none placeholder:text-[#c9d1d9]"
               />
               {query && <button onClick={() => setQuery('')}><X className="w-4 h-4 text-[#c9d1d9]" /></button>}
@@ -74,11 +73,11 @@ export default function GlobalSearch() {
               {q.length < 2 ? (
                 <div className="px-4 py-8 text-center">
                   <Search className="w-8 h-8 mx-auto mb-3 text-[#e7e7e7]" />
-                  <p className="text-[#9ca3af] text-sm">Type at least 2 characters to search</p>
+                  <p className="text-[#9ca3af] text-sm">{t('ui.search.hint')}</p>
                 </div>
               ) : results.length === 0 ? (
                 <div className="px-4 py-8 text-center">
-                  <p className="text-[#9ca3af] text-sm">No results for "<strong>{query}</strong>"</p>
+                  <p className="text-[#9ca3af] text-sm">{t('ui.search.noResults')} "<strong>{query}</strong>"</p>
                 </div>
               ) : (
                 <div className="py-2">
@@ -109,10 +108,10 @@ export default function GlobalSearch() {
 
             {/* Footer */}
             <div className="px-4 py-2.5 border-t border-[#f0f0f0] flex items-center gap-4 text-[10px] text-[#c9d1d9] font-bold">
-              <span>↑↓ Navigate</span>
-              <span>↵ Open</span>
-              <span>ESC Close</span>
-              <span className="ml-auto">{results.length} results</span>
+              <span>↑↓ {t('ui.search.navigate')}</span>
+              <span>↵ {t('ui.search.openHint')}</span>
+              <span>ESC {t('ui.search.closeHint')}</span>
+              <span className="ml-auto">{results.length} {t('ui.search.resultsLabel')}</span>
             </div>
           </div>
         </div>

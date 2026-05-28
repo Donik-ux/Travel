@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, Shield } from 'lucide-react';
+import { useTranslation } from '../store/useLangStore';
 
 const DISCLAIMER_KEY = 'imaf_disclaimer_accepted';
 
 export default function DisclaimerModal() {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [read, setRead] = useState(false);
 
@@ -27,7 +29,7 @@ export default function DisclaimerModal() {
           <Shield className="w-6 h-6 text-yellow-300 shrink-0" />
           <div>
             <h2 className="text-white font-black text-[17px] leading-tight">MAFTRAVEL</h2>
-            <p className="text-white/60 text-[11px] uppercase tracking-widest font-bold">Пользовательское соглашение</p>
+            <p className="text-white/60 text-[11px] uppercase tracking-widest font-bold">{t('ui.disclaimer.eyebrow')}</p>
           </div>
         </div>
 
@@ -36,34 +38,34 @@ export default function DisclaimerModal() {
           <div className="flex items-start gap-3 mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
             <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
             <p className="text-[13px] font-bold text-amber-800">
-              Пожалуйста, внимательно прочитайте перед использованием сервиса
+              {t('ui.disclaimer.warning')}
             </p>
           </div>
 
           <div className="space-y-4 text-[13px] text-[#595959] leading-relaxed">
             <p>
-              <strong className="text-[#1a1a1a]">1. Ограничение ответственности за бюджет.</strong>{' '}
-              Все расчёты бюджета, предоставляемые платформой MAFTRAVEL, носят <em>исключительно ориентировочный и информационный</em> характер. Мы не гарантируем, что ваши реальные расходы совпадут с расчётными. Цены на авиабилеты, отели, питание и развлечения могут изменяться в любое время без предупреждения.
+              <strong className="text-[#1a1a1a]">{t('ui.disclaimer.s1Title')}</strong>{' '}
+              {t('ui.disclaimer.s1Body')}
             </p>
             <p>
-              <strong className="text-[#1a1a1a]">2. Отсутствие финансовых гарантий.</strong>{' '}
-              MAFTRAVEL и её сотрудники не несут ответственности за любые финансовые убытки, перерасход бюджета, незапланированные траты или иные денежные потери, возникшие в результате использования предоставленных расчётов.
+              <strong className="text-[#1a1a1a]">{t('ui.disclaimer.s2Title')}</strong>{' '}
+              {t('ui.disclaimer.s2Body')}
             </p>
             <p>
-              <strong className="text-[#1a1a1a]">3. Визовые требования.</strong>{' '}
-              Информация о визах носит справочный характер. Мы настоятельно рекомендуем самостоятельно уточнять актуальные визовые требования в посольстве или консульстве страны назначения. MAFTRAVEL не несёт ответственности за отказ в выдаче визы или въезде.
+              <strong className="text-[#1a1a1a]">{t('ui.disclaimer.s3Title')}</strong>{' '}
+              {t('ui.disclaimer.s3Body')}
             </p>
             <p>
-              <strong className="text-[#1a1a1a]">4. Изменение условий.</strong>{' '}
-              Все маршруты, цены и рекомендации формируются автоматически на основе ИИ и открытых источников данных. Сервис не является турагентством и не осуществляет продажу туристических услуг напрямую.
+              <strong className="text-[#1a1a1a]">{t('ui.disclaimer.s4Title')}</strong>{' '}
+              {t('ui.disclaimer.s4Body')}
             </p>
             <p>
-              <strong className="text-[#1a1a1a]">5. Авторские права.</strong>{' '}
-              Все материалы сайта (тексты, дизайн, программный код) защищены авторским правом © 2025 MAFTRAVEL. Копирование без разрешения запрещено.
+              <strong className="text-[#1a1a1a]">{t('ui.disclaimer.s5Title')}</strong>{' '}
+              {t('ui.disclaimer.s5Body')}
             </p>
             <p>
-              <strong className="text-[#1a1a1a]">6. Использование сервиса.</strong>{' '}
-              Нажимая кнопку «Продолжить», вы подтверждаете, что прочитали, поняли и согласны со всеми условиями данного соглашения. Вы также подтверждаете, что не будете предъявлять претензий к MAFTRAVEL в связи с несовпадением реальных расходов с расчётными.
+              <strong className="text-[#1a1a1a]">{t('ui.disclaimer.s6Title')}</strong>{' '}
+              {t('ui.disclaimer.s6Body')}
             </p>
           </div>
         </div>
@@ -80,7 +82,7 @@ export default function DisclaimerModal() {
               {read && <CheckCircle className="w-3.5 h-3.5 text-white" />}
             </div>
             <span className="text-[13px] text-[#595959] leading-snug">
-              Я прочитал(а) все условия соглашения и принимаю их в полном объёме
+              {t('ui.disclaimer.checkbox')}
             </span>
           </label>
 
@@ -93,11 +95,11 @@ export default function DisclaimerModal() {
                 : 'bg-[#e7e7e7] text-[#9ca3af] cursor-not-allowed'
             }`}
           >
-            Продолжить
+            {t('ui.disclaimer.accept')}
           </button>
 
           <p className="text-center text-[11px] text-[#9ca3af] mt-3">
-            Продолжая использование сайта, вы соглашаетесь с нашими критериями
+            {t('ui.disclaimer.footnote')}
           </p>
         </div>
       </div>

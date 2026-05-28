@@ -29,21 +29,21 @@ const getBookingSites = (t) => [
 ];
 
 const POPULAR_ROUTES = [
-  { from: 'Bishkek (FRU)', to: 'Dubai (DXB)',     city: 'Dubai',     country: 'UAE',         from$: 240 },
-  { from: 'Bishkek (FRU)', to: 'Istanbul (IST)',  city: 'Istanbul',  country: 'Turkey',      from$: 280 },
-  { from: 'Bishkek (FRU)', to: 'London (LHR)',    city: 'London',    country: 'UK',          from$: 520 },
-  { from: 'Almaty (ALA)',  to: 'Bangkok (BKK)',   city: 'Bangkok',   country: 'Thailand',    from$: 360 },
-  { from: 'Tashkent (TAS)',to: 'Istanbul (IST)',  city: 'Istanbul',  country: 'Turkey',      from$: 290 },
-  { from: 'Bishkek (FRU)', to: 'Tokyo (HND)',     city: 'Tokyo',     country: 'Japan',       from$: 720 },
-  { from: 'Bishkek (FRU)', to: 'Paris (CDG)',     city: 'Paris',     country: 'France',      from$: 540 },
-  { from: 'Almaty (ALA)',  to: 'New York (JFK)',  city: 'New York',  country: 'USA',         from$: 720 },
+  { from: 'Dubai (DXB)',     to: 'Maldives (MLE)',    city: 'Maldives',   country: 'Maldives',    from$: 410 },
+  { from: 'Dubai (DXB)',     to: 'Bali (DPS)',        city: 'Bali',       country: 'Indonesia',   from$: 480 },
+  { from: 'Abu Dhabi (AUH)', to: 'Seychelles (SEZ)',  city: 'Seychelles', country: 'Seychelles',  from$: 520 },
+  { from: 'Istanbul (IST)',  to: 'Mauritius (MRU)',   city: 'Mauritius',  country: 'Mauritius',   from$: 560 },
+  { from: 'Dubai (DXB)',     to: 'Phuket (HKT)',      city: 'Phuket',     country: 'Thailand',    from$: 390 },
+  { from: 'Doha (DOH)',      to: 'Bali (DPS)',        city: 'Bali',       country: 'Indonesia',   from$: 500 },
+  { from: 'Dubai (DXB)',     to: 'Bangkok (BKK)',     city: 'Bangkok',    country: 'Thailand',    from$: 280 },
+  { from: 'Abu Dhabi (AUH)', to: 'Maldives (MLE)',    city: 'Maldives',   country: 'Maldives',    from$: 430 },
 ];
 
 const TIME_SLOTS = [
-  { id: 'early',   icon: Sunrise, label: 'Early',     range: 'Before 06:00', start: 0,  end: 6  },
-  { id: 'morning', icon: Sun,     label: 'Morning',   range: '06:00–12:00',  start: 6,  end: 12 },
-  { id: 'afternoon', icon: Sun,   label: 'Afternoon', range: '12:00–18:00',  start: 12, end: 18 },
-  { id: 'evening', icon: Sunset,  label: 'Evening',   range: '18:00–24:00',  start: 18, end: 24 },
+  { id: 'early',   icon: Sunrise, labelKey: 'early',     rangeKey: 'earlyRange',     start: 0,  end: 6  },
+  { id: 'morning', icon: Sun,     labelKey: 'morning',   rangeKey: 'morningRange',   start: 6,  end: 12 },
+  { id: 'afternoon', icon: Sun,   labelKey: 'afternoon', rangeKey: 'afternoonRange', start: 12, end: 18 },
+  { id: 'evening', icon: Sunset,  labelKey: 'evening',   rangeKey: 'eveningRange',   start: 18, end: 24 },
 ];
 
 // Parse "HH:MM AM/PM" → hour (24h)
@@ -62,8 +62,8 @@ export default function Flights() {
   const navigate   = useNavigate();
   useSEO({
     title: 'Search Cheap Flights · Compare 6 Airlines',
-    description: 'Find cheap flights from Bishkek, Almaty, Tashkent to Dubai, Istanbul, London, Tokyo and 100+ destinations. Smart filters, real-time prices.',
-    keywords: ['cheap flights', 'flight search', 'Bishkek flights', 'Dubai flights', 'compare airfare', 'MAFTRAVEL flights'],
+    description: 'Find cheap flights from Dubai, Abu Dhabi, Doha and Istanbul to the Maldives, Bali, Seychelles, Mauritius and 100+ destinations. Smart filters, real-time prices.',
+    keywords: ['cheap flights', 'flight search', 'Dubai flights', 'Maldives flights', 'Bali flights', 'compare airfare', 'MAFTRAVEL flights'],
   });
 
   const [formData, setFormData] = useState({ from: '', to: '', date: '', returnDate: '' });
@@ -84,9 +84,9 @@ export default function Flights() {
       setAirlineFilter(null);
       setTimeFilter(null);
       setMaxPrice(null);
-      toast.success('Flights found', `${payload.from} → ${payload.to}`);
+      toast.success(t('flightsPage.toast.foundTitle'), `${payload.from} → ${payload.to}`);
     } catch {
-      toast.error('Search failed', 'Please try again in a moment.');
+      toast.error(t('flightsPage.toast.failedTitle'), t('flightsPage.toast.failedBody'));
     }
   };
 
@@ -132,19 +132,21 @@ export default function Flights() {
     <div className="bg-[#f5f5f5] min-h-screen -mt-[64px]">
 
       {/* ── HERO + SEARCH ── */}
-      <section className="relative bg-[#003580] text-white pt-[100px] pb-32 md:pb-36 overflow-hidden">
-        <div className="absolute inset-0 opacity-25 pointer-events-none"
-             style={{ backgroundImage:'radial-gradient(circle at 15% 30%, #0071c2 0%, transparent 45%), radial-gradient(circle at 85% 70%, #febb02 0%, transparent 35%)' }} />
+      <section className="relative aurora-bg text-white pt-[100px] pb-32 md:pb-36 overflow-hidden">
+        <div className="film-grain" />
+        <div className="absolute inset-0 sheen-top pointer-events-none" />
+        <Plane className="absolute right-[6%] top-[120px] w-40 h-40 text-white/[0.06] -rotate-[25deg] animate-float pointer-events-none hidden md:block" />
+        <div className="absolute -right-24 -bottom-12 w-80 h-80 rounded-full bg-[#febb02]/12 blur-3xl pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
           <div className="max-w-2xl mb-7">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#febb02] text-[#1a1a1a] text-[11px] font-black uppercase tracking-widest mb-4">
-              <Plane className="w-3.5 h-3.5" /> {t('flights.badge') || 'Flight Search'}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#febb02] text-[#1a1a1a] text-[11px] font-black uppercase tracking-widest mb-4 shadow-float">
+              <Plane className="w-3.5 h-3.5" /> {t('flights.badge') || t('flightsPage.hero.badge')}
             </div>
-            <h1 className="text-[34px] md:text-[56px] font-black tracking-tight leading-[1.05] mb-3">
-              Compare flights<br className="hidden md:block" /> across the globe.
+            <h1 className="font-display text-[40px] md:text-[62px] font-semibold tracking-[-0.03em] leading-[1.0] mb-3 [text-shadow:0_2px_30px_rgba(0,0,0,0.28)]">
+              {t('flightsPage.hero.titleLine1')}<br className="hidden md:block" /> <span className="italic font-medium text-gradient-gold">{t('flightsPage.hero.titleLine2')}</span>
             </h1>
-            <p className="text-[15px] md:text-[17px] text-white/85 font-medium max-w-xl">
-              Real-time prices from 12+ airlines · smart filters · book on the platform with the best fare.
+            <p className="text-[15px] md:text-[18px] text-white/80 font-medium max-w-xl leading-relaxed">
+              {t('flightsPage.hero.subtitle')}
             </p>
           </div>
         </div>
@@ -166,13 +168,13 @@ export default function Flights() {
       <section className="max-w-7xl mx-auto px-4 md:px-8 py-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { icon: BadgePercent, t: 'Best Price Guarantee', s: '12+ airlines compared' },
-            { icon: Shield,       t: 'Secure Bookings',      s: 'SSL · GDPR · PCI' },
-            { icon: Headphones,   t: '24 / 7 Support',       s: 'Real humans, real fast' },
-            { icon: ThumbsUp,     t: '4.9 / 5 from travelers',s: '14,000+ reviews' },
+            { icon: BadgePercent, t: t('flightsPage.trust.bestPrice'), s: t('flightsPage.trust.bestPriceSub') },
+            { icon: Shield,       t: t('flightsPage.trust.secure'),    s: t('flightsPage.trust.secureSub') },
+            { icon: Headphones,   t: t('flightsPage.trust.support'),   s: t('flightsPage.trust.supportSub') },
+            { icon: ThumbsUp,     t: t('flightsPage.trust.rating'),    s: t('flightsPage.trust.ratingSub') },
           ].map((f, i) => (
-            <div key={i} className="bg-white border border-[#e7e7e7] rounded-xl p-4 flex items-center gap-3 hover:border-[#0071c2] hover:shadow-md transition">
-              <div className="w-10 h-10 rounded-lg bg-[#f0f5ff] text-[#0071c2] flex items-center justify-center shrink-0">
+            <div key={i} className="bg-white border border-[#e7e7e7] rounded-2xl p-4 flex items-center gap-3 hover:border-[#0071c2] shadow-soft hover:shadow-float lift transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f0f5ff] to-[#dceaff] text-[#0071c2] flex items-center justify-center shrink-0 shadow-soft">
                 <f.icon className="w-5 h-5" />
               </div>
               <div className="min-w-0">
@@ -189,16 +191,16 @@ export default function Flights() {
         {/* ── Loading skeletons ── */}
         {loading && (
           <div className="mt-2 space-y-3">
-            <div className="h-6 w-48 bg-white border border-[#e7e7e7] rounded-md animate-pulse mb-3" />
+            <div className="h-6 w-48 rounded-md shimmer mb-3" />
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-white border border-[#e7e7e7] rounded-2xl p-5 animate-pulse">
+              <div key={i} className="bg-white border border-[#e7e7e7] shadow-soft rounded-2xl p-5">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#eef2f6]" />
+                  <div className="w-12 h-12 rounded-xl shimmer" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 w-1/3 bg-[#eef2f6] rounded" />
-                    <div className="h-3 w-1/2 bg-[#eef2f6] rounded" />
+                    <div className="h-4 w-1/3 rounded shimmer" />
+                    <div className="h-3 w-1/2 rounded shimmer" />
                   </div>
-                  <div className="w-24 h-10 bg-[#eef2f6] rounded-lg" />
+                  <div className="w-24 h-10 rounded-xl shimmer" />
                 </div>
               </div>
             ))}
@@ -210,27 +212,27 @@ export default function Flights() {
           <div className="grid lg:grid-cols-4 gap-6 mt-4">
             {/* Filters sidebar */}
             <aside className="lg:col-span-1 space-y-3 lg:sticky lg:top-[80px] self-start max-h-[80vh] overflow-auto pr-1">
-              <div className="bg-white border border-[#e7e7e7] rounded-2xl p-4">
+              <div className="bg-white border border-[#e7e7e7] shadow-soft rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-[13px] font-black uppercase tracking-widest text-[#9ca3af]">Filters</h3>
+                  <h3 className="text-[13px] font-black uppercase tracking-widest text-[#9ca3af]">{t('flightsPage.filters.title')}</h3>
                   {hasFilters && (
-                    <button onClick={clearFilters} className="text-[11px] font-black text-red-500 hover:underline">Clear all</button>
+                    <button onClick={clearFilters} className="text-[11px] font-black text-red-500 hover:underline">{t('flightsPage.filters.clearAll')}</button>
                   )}
                 </div>
 
                 {/* Stops */}
-                <FilterGroup title="Stops">
+                <FilterGroup title={t('flightsPage.filters.stops')}>
                   {[
-                    { v: 'all',     l: 'Any'      },
-                    { v: 'nonstop', l: 'Non-stop' },
-                    { v: 'business',l: 'Business' },
+                    { v: 'all',     l: t('flightsPage.filters.any')      },
+                    { v: 'nonstop', l: t('flightsPage.filters.nonstop') },
+                    { v: 'business',l: t('flightsPage.filters.business') },
                   ].map(o => (
                     <FilterChip key={o.v} active={filter === o.v} onClick={() => setFilter(o.v)}>{o.l}</FilterChip>
                   ))}
                 </FilterGroup>
 
                 {/* Price */}
-                <FilterGroup title={`Max price · $${maxPrice ?? priceRange[1]}`}>
+                <FilterGroup title={`${t('flightsPage.filters.maxPrice')} · $${maxPrice ?? priceRange[1]}`}>
                   <input type="range"
                     min={priceRange[0]} max={priceRange[1]} step={10}
                     value={maxPrice ?? priceRange[1]}
@@ -243,30 +245,30 @@ export default function Flights() {
                 </FilterGroup>
 
                 {/* Departure time */}
-                <FilterGroup title="Departure time">
+                <FilterGroup title={t('flightsPage.filters.departureTime')}>
                   <div className="grid grid-cols-2 gap-1.5">
                     {TIME_SLOTS.map(s => (
                       <button key={s.id} onClick={() => setTimeFilter(timeFilter === s.id ? null : s.id)}
-                        className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg text-[11px] font-black transition border ${
-                          timeFilter === s.id ? 'bg-[#003580] text-white border-[#003580]' : 'bg-white border-[#e7e7e7] text-[#1a1a1a] hover:border-[#0071c2]'
+                        className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl text-[11px] font-black transition border active:scale-95 ${
+                          timeFilter === s.id ? 'bg-[#003580] text-white border-[#003580] shadow-soft' : 'bg-white border-[#e7e7e7] text-[#1a1a1a] hover:border-[#0071c2]'
                         }`}>
                         <s.icon className="w-3.5 h-3.5" />
-                        {s.label}
-                        <span className={`text-[9px] font-bold ${timeFilter === s.id ? 'text-white/70' : 'text-[#9ca3af]'}`}>{s.range}</span>
+                        {t(`flightsPage.filters.${s.labelKey}`)}
+                        <span className={`text-[9px] font-bold ${timeFilter === s.id ? 'text-white/70' : 'text-[#9ca3af]'}`}>{t(`flightsPage.filters.${s.rangeKey}`)}</span>
                       </button>
                     ))}
                   </div>
                 </FilterGroup>
 
                 {/* Airlines */}
-                <FilterGroup title="Airlines">
+                <FilterGroup title={t('flightsPage.filters.airlines')}>
                   <div className="space-y-1">
                     {availableAirlines.map(a => {
                       const minP = Math.min(...flights.filter(f => f.airline === a).map(f => f.price));
                       return (
                         <button key={a} onClick={() => setAirlineFilter(airlineFilter === a ? null : a)}
-                          className={`w-full text-left flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[12px] font-bold transition ${
-                            airlineFilter === a ? 'bg-[#003580] text-white' : 'hover:bg-[#f0f5ff] text-[#1a1a1a]'
+                          className={`w-full text-left flex items-center justify-between px-2.5 py-1.5 rounded-xl text-[12px] font-bold transition active:scale-[0.98] ${
+                            airlineFilter === a ? 'bg-[#003580] text-white shadow-soft' : 'hover:bg-[#f0f5ff] text-[#1a1a1a]'
                           }`}>
                           <span className="truncate">{a}</span>
                           <span className={airlineFilter === a ? 'text-white/80' : 'text-[#9ca3af]'}>${minP}</span>
@@ -279,10 +281,10 @@ export default function Flights() {
 
               {/* Quick insights */}
               {cheapest && fastest && (
-                <div className="bg-white border border-[#e7e7e7] rounded-2xl p-4 space-y-2.5">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">Highlights</h3>
-                  <Insight icon={<Wallet className="w-3.5 h-3.5" />} label="Cheapest" val={`$${cheapest}`} sub={flights.find(f => f.price === cheapest)?.airline} />
-                  <Insight icon={<Clock className="w-3.5 h-3.5" />}  label="Fastest"  val={fastest.duration} sub={fastest.airline} />
+                <div className="bg-white border border-[#e7e7e7] shadow-soft rounded-2xl p-4 space-y-2.5">
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">{t('flightsPage.highlights.title')}</h3>
+                  <Insight icon={<Wallet className="w-3.5 h-3.5" />} label={t('flightsPage.highlights.cheapest')} val={`$${cheapest}`} sub={flights.find(f => f.price === cheapest)?.airline} />
+                  <Insight icon={<Clock className="w-3.5 h-3.5" />}  label={t('flightsPage.highlights.fastest')}  val={fastest.duration} sub={fastest.airline} />
                 </div>
               )}
             </aside>
@@ -293,44 +295,44 @@ export default function Flights() {
                 <div>
                   <h2 className="text-[20px] font-black text-[#1a1a1a]">{formData.from} → {formData.to}</h2>
                   <div className="text-[12px] text-[#595959] font-medium">
-                    <strong>{filtered.length}</strong> of {flights.length} flights match your filters
-                    {cheapest && <> · from <strong className="text-[#003580]">${cheapest}</strong></>}
+                    <strong>{filtered.length}</strong> {t('flightsPage.results.matchPrefix')} {flights.length} {t('flightsPage.results.matchSuffix')}
+                    {cheapest && <> · {t('flightsPage.results.from')} <strong className="text-[#003580]">${cheapest}</strong></>}
                   </div>
                 </div>
                 <button
                   onClick={() => handleSearch({ formData })}
                   disabled={loading || aiRefining}
-                  className="px-3 py-2 rounded-lg border-2 border-[#0071c2] text-[#0071c2] hover:bg-[#f0f5ff] text-[12px] font-black flex items-center gap-1.5 transition active:scale-95 disabled:opacity-50"
-                  title="Re-fetch prices with AI">
+                  className="px-3.5 py-2 rounded-xl border-2 border-[#0071c2] text-[#0071c2] hover:bg-[#f0f5ff] text-[12px] font-black flex items-center gap-1.5 transition active:scale-95 disabled:opacity-50 shadow-soft hover:shadow-float"
+                  title={t('flightsPage.results.refreshTitle')}>
                   <Sparkles className={`w-3.5 h-3.5 ${aiRefining ? 'animate-pulse' : ''}`} />
-                  {aiRefining ? 'AI refining prices…' : 'Refresh with AI'}
+                  {aiRefining ? t('flightsPage.results.aiRefining') : t('flightsPage.results.refreshWithAI')}
                 </button>
               </div>
 
               {/* Source banner: Amadeus / Grok / Template */}
               {source === 'amadeus' && (
-                <div className="mb-3 px-4 py-3 rounded-xl bg-gradient-to-r from-[#e8f5e9] to-white border border-[#bbf7d0] flex items-center gap-2.5">
+                <div className="mb-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-[#e8f5e9] to-white border border-[#bbf7d0] shadow-soft flex items-center gap-2.5">
                   <span className="text-[18px]">📡</span>
                   <div className="text-[12px] font-bold text-[#155724] leading-snug">
-                    <strong>Live data · Powered by Amadeus GDS</strong> — these are real prices &amp; times pulled from the same global distribution system that airlines and Skyscanner use. Verify the final price on the airline site before paying.
+                    <strong>{t('flightsPage.banners.amadeusTitle')}</strong> {t('flightsPage.banners.amadeusBody')}
                   </div>
                 </div>
               )}
               {aiRefining && source !== 'amadeus' && (
-                <div className="mb-3 px-4 py-3 rounded-xl bg-gradient-to-r from-[#f0f5ff] to-[#dceaff] border border-[#0071c2]/20 flex items-center gap-2.5">
+                <div className="mb-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-[#f0f5ff] to-[#dceaff] border border-[#0071c2]/20 shadow-soft flex items-center gap-2.5">
                   <Sparkles className="w-4 h-4 text-[#0071c2] animate-pulse shrink-0" />
                   <div className="text-[12px] text-[#003580] font-bold">
-                    Grok is checking realistic fares for this route… prices will update in a moment.
+                    {t('flightsPage.banners.grokRefining')}
                   </div>
                 </div>
               )}
               {!aiRefining && source === 'grok' && aiSource && (
-                <div className="mb-3 px-4 py-3 rounded-xl bg-gradient-to-r from-[#fff7e6] to-white border border-[#ffd76e] flex items-center gap-2.5">
+                <div className="mb-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-[#fff7e6] to-white border border-[#ffd76e] shadow-soft flex items-center gap-2.5">
                   <BadgeCheck className="w-4 h-4 text-[#a45e00] shrink-0" />
                   <div className="text-[12px] font-bold text-[#7c4a00] leading-snug">
-                    <strong>🤖 AI-priced estimate</strong> · median <strong>${aiSource.median}</strong> · typical range ${aiSource.low}–${aiSource.high}{aiSource.note ? ` · ${aiSource.note}` : ''}
+                    <strong>{t('flightsPage.banners.aiEstimateTitle')}</strong> · {t('flightsPage.banners.aiEstimateMedian')} <strong>${aiSource.median}</strong> · {t('flightsPage.banners.aiEstimateRange')} ${aiSource.low}–${aiSource.high}{aiSource.note ? ` · ${aiSource.note}` : ''}
                     <br/>
-                    <span className="font-semibold text-[#a45e00]/85">No live GDS connection — configure Amadeus keys for real prices. Always verify on the airline site.</span>
+                    <span className="font-semibold text-[#a45e00]/85">{t('flightsPage.banners.aiEstimateNote')}</span>
                   </div>
                 </div>
               )}
@@ -343,13 +345,13 @@ export default function Flights() {
                     </motion.div>
                   ))
                 ) : (
-                  <div className="text-center py-12 bg-white rounded-2xl border border-[#e7e7e7]">
+                  <div className="text-center py-12 bg-white rounded-2xl border border-[#e7e7e7] shadow-soft">
                     <Filter className="w-10 h-10 mx-auto mb-3 text-[#c9d1d9]" />
-                    <p className="text-[#1a1a1a] font-bold mb-1">No flights match your filters</p>
-                    <p className="text-[#9ca3af] text-sm mb-4">Try clearing some filters to see more results.</p>
+                    <p className="text-[#1a1a1a] font-bold mb-1">{t('flightsPage.results.noMatchTitle')}</p>
+                    <p className="text-[#9ca3af] text-sm mb-4">{t('flightsPage.results.noMatchSub')}</p>
                     <button onClick={clearFilters}
-                      className="px-4 py-2 rounded-lg bg-[#0071c2] hover:bg-[#005fa3] text-white text-[13px] font-black transition">
-                      Clear filters
+                      className="px-4 py-2 rounded-xl bg-[#0071c2] hover:bg-[#005fa3] text-white text-[13px] font-black transition active:scale-95 shadow-soft hover:shadow-float">
+                      {t('flightsPage.results.clearFilters')}
                     </button>
                   </div>
                 )}
@@ -365,9 +367,9 @@ export default function Flights() {
               <div className="flex items-end justify-between mb-5">
                 <div>
                   <div className="inline-flex items-center gap-2 text-[#0071c2] text-[11px] font-black uppercase tracking-widest mb-1">
-                    <TrendingDown className="w-3.5 h-3.5" /> Cheapest right now
+                    <TrendingDown className="w-3.5 h-3.5" /> {t('flightsPage.inspiration.eyebrow')}
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-black text-[#1a1a1a] tracking-tight">Popular routes from your region</h2>
+                  <h2 className="text-2xl md:text-3xl font-black text-gradient tracking-tight">{t('flightsPage.inspiration.title')}</h2>
                 </div>
               </div>
 
@@ -379,15 +381,16 @@ export default function Flights() {
                       handleSearch({ formData: { from: r.from, to: r.to, date: '' } });
                       window.scrollTo({ top: 80, behavior: 'smooth' });
                     }}
-                    className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-cover bg-center transition hover:-translate-y-1 hover:shadow-xl border border-[#e7e7e7]"
+                    className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-cover bg-center lift shadow-soft hover:shadow-lift border border-[#e7e7e7] active:scale-[0.98]"
                     style={{ backgroundImage: `url(${heroFor(r.city)})` }}>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style={{ backgroundImage: `url(${heroFor(r.city)})` }} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
                     <div className="absolute inset-0 p-3 md:p-4 flex flex-col justify-end text-left text-white">
                       <div className="text-[10px] font-black uppercase tracking-widest text-[#febb02] mb-1">{r.country}</div>
                       <div className="text-[18px] md:text-[20px] font-black leading-tight">{r.city}</div>
                       <div className="text-[10px] text-white/75 font-bold mb-2">{r.from.split(' (')[0]} → {r.to.split(' (')[0]}</div>
-                      <div className="inline-flex items-center gap-1 bg-white/95 text-[#003580] font-black px-2 py-0.5 rounded-md w-fit text-[11px]">
-                        <Plane className="w-3 h-3" /> from ${r.from$}
+                      <div className="inline-flex items-center gap-1 bg-white/95 text-[#003580] font-black px-2 py-0.5 rounded-md w-fit text-[11px] shadow-soft">
+                        <Plane className="w-3 h-3" /> {t('flightsPage.inspiration.from')} ${r.from$}
                       </div>
                     </div>
                   </button>
@@ -397,23 +400,23 @@ export default function Flights() {
 
             {/* AI Trip CTA */}
             <section className="mt-8">
-              <div className="relative overflow-hidden bg-gradient-to-r from-[#003580] via-[#0058b1] to-[#0071c2] rounded-3xl p-6 md:p-8 text-white">
-                <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-[#febb02]/30 blur-3xl pointer-events-none" />
+              <div className="relative overflow-hidden bg-gradient-to-r from-[#002250] via-[#0058b1] to-[#0071c2] rounded-3xl p-6 md:p-8 text-white shadow-lift">
+                <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-[#febb02]/30 blur-3xl pointer-events-none animate-float" />
                 <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
                   <div className="max-w-xl">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#febb02] text-[#1a1a1a] text-[11px] font-black uppercase tracking-widest mb-3">
-                      <Sparkles className="w-3.5 h-3.5" /> Don't know where to go?
+                      <Sparkles className="w-3.5 h-3.5" /> {t('flightsPage.aiCta.badge')}
                     </div>
                     <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight mb-2">
-                      Let AI plan your whole trip
+                      {t('flightsPage.aiCta.title')}
                     </h2>
                     <p className="text-[14px] text-white/85 font-medium">
-                      Tell us your budget — Grok picks a destination, builds a day-by-day plan, finds halal food and emergency numbers. 100% free.
+                      {t('flightsPage.aiCta.body')}
                     </p>
                   </div>
                   <button onClick={() => navigate('/hot-tours')}
-                    className="px-5 py-3 rounded-xl bg-[#febb02] hover:bg-[#ffb700] text-[#1a1a1a] font-black text-[14px] flex items-center gap-2 active:scale-95 transition shrink-0">
-                    <Sparkles className="w-4 h-4" /> Open AI Trip Studio
+                    className="btn-gold px-5 py-3 text-[14px] flex items-center gap-2 shrink-0">
+                    <Sparkles className="w-4 h-4" /> {t('flightsPage.aiCta.button')}
                   </button>
                 </div>
               </div>
@@ -445,20 +448,20 @@ export default function Flights() {
         <section className="mt-10">
           <div className="flex items-end gap-2 mb-2 flex-wrap">
             <BadgeCheck className="w-5 h-5 text-[#008009]" />
-            <h2 className="text-[20px] md:text-[24px] font-black text-[#1a1a1a]">Buy direct from the airline</h2>
-            <span className="px-2 py-0.5 bg-[#e8f5e9] text-[#008009] text-[10px] font-black uppercase tracking-wider rounded-md">Official</span>
+            <h2 className="text-[20px] md:text-[24px] font-black text-[#1a1a1a]">{t('flightsPage.direct.title')}</h2>
+            <span className="px-2 py-0.5 bg-[#e8f5e9] text-[#008009] text-[10px] font-black uppercase tracking-wider rounded-md">{t('flightsPage.direct.official')}</span>
           </div>
           <p className="text-[#595959] text-[13px] font-medium mb-5">
-            No middleman, no extra fee — book on the airline's own website with miles, free changes, and direct customer support.
+            {t('flightsPage.direct.sub')}
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {Object.values(AIRLINE_LINKS).map((al) => (
               <a key={al.name} href={al.homepage} target="_blank" rel="noopener noreferrer"
-                className="bg-white border-2 border-[#e7e7e7] hover:border-[#008009] hover:shadow-lg rounded-2xl p-4 flex flex-col gap-2 transition group active:scale-[0.98]">
+                className="bg-white border-2 border-[#e7e7e7] hover:border-[#008009] shadow-soft hover:shadow-float lift rounded-2xl p-4 flex flex-col gap-2 transition-colors group active:scale-[0.98]">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-[#f8f9fa] border border-[#e7e7e7] flex items-center justify-center text-xl shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#f8f9fa] border border-[#e7e7e7] flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform">
                       {al.flag}
                     </div>
                     <div className="min-w-0">
@@ -466,19 +469,19 @@ export default function Flights() {
                       <p className="text-[10.5px] text-[#0071c2] font-bold truncate">{al.domain}</p>
                     </div>
                   </div>
-                  <BadgeCheck className="w-4 h-4 text-[#008009] shrink-0 mt-0.5" title="Official airline" />
+                  <BadgeCheck className="w-4 h-4 text-[#008009] shrink-0 mt-0.5" title={t('flightsPage.direct.officialAirline')} />
                 </div>
                 <div className="flex items-center gap-1 text-[#008009] text-[11px] font-black group-hover:gap-2 transition-all mt-auto">
-                  Book direct <ExternalLink className="w-3 h-3" />
+                  {t('flightsPage.direct.bookDirect')} <ExternalLink className="w-3 h-3" />
                 </div>
               </a>
             ))}
           </div>
 
-          <div className="mt-5 bg-[#e8f5e9] border border-[#bbf7d0] rounded-xl p-4 flex items-start gap-3">
+          <div className="mt-5 bg-[#e8f5e9] border border-[#bbf7d0] rounded-2xl p-4 flex items-start gap-3 shadow-soft">
             <BadgeCheck className="w-5 h-5 text-[#008009] shrink-0 mt-0.5" />
             <div className="text-[12px] text-[#155724] font-semibold leading-relaxed">
-              <strong className="font-black">Why buy direct?</strong> Earn frequent-flyer miles · cheaper changes &amp; refunds · direct customer service · same-day operational support (delays, cancellations). The price is usually identical to aggregators.
+              <strong className="font-black">{t('flightsPage.direct.whyTitle')}</strong> {t('flightsPage.direct.whyBody')}
             </div>
           </div>
         </section>
@@ -488,7 +491,7 @@ export default function Flights() {
           <div className="flex items-end gap-2 mb-2 flex-wrap">
             <Globe className="w-5 h-5 text-[#0071c2]" />
             <h2 className="text-[20px] md:text-[24px] font-black text-[#1a1a1a]">{t('flights.bookingSites') || 'Compare on aggregators'}</h2>
-            <span className="px-2 py-0.5 bg-[#f0f5ff] text-[#0071c2] text-[10px] font-black uppercase tracking-wider rounded-md">3rd-party</span>
+            <span className="px-2 py-0.5 bg-[#f0f5ff] text-[#0071c2] text-[10px] font-black uppercase tracking-wider rounded-md">{t('flightsPage.aggregators.thirdParty')}</span>
           </div>
           <p className="text-[#595959] text-[13px] font-medium mb-5">
             {t('flights.bookingSub') || 'Open the platform with the best fare for your route. Sometimes 10–30% cheaper than the airline itself.'}
@@ -498,7 +501,7 @@ export default function Flights() {
             {BOOKING_SITES.map((site) => (
               <a key={site.name} href={site.url} target="_blank" rel="noopener noreferrer"
                 style={{ '--brand': site.color }}
-                className="group relative bg-white border border-[#e7e7e7] rounded-2xl p-5 flex flex-col gap-3.5 overflow-hidden hover:border-[var(--brand)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                className="group relative bg-white border border-[#e7e7e7] shadow-soft rounded-2xl p-5 flex flex-col gap-3.5 overflow-hidden hover:border-[var(--brand)] hover:shadow-lift hover:-translate-y-1 transition-all duration-300">
                 {/* brand glow on hover */}
                 <div className="absolute -top-14 -right-14 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 blur-2xl transition-opacity duration-500 pointer-events-none"
                   style={{ background: site.color }} />
@@ -542,7 +545,7 @@ export default function Flights() {
             ))}
           </div>
 
-          <div className="mt-5 bg-[#fff7e6] border border-[#ffd76e] rounded-xl p-4 flex items-start gap-3">
+          <div className="mt-5 bg-[#fff7e6] border border-[#ffd76e] rounded-2xl p-4 flex items-start gap-3 shadow-soft">
             <div className="text-xl shrink-0">💡</div>
             <div>
               <p className="text-[13px] font-black text-[#a45e00] mb-1">{t('flights.proTip') || 'Pro tip: compare before you buy'}</p>
@@ -565,16 +568,16 @@ const FilterGroup = ({ title, children }) => (
 
 const FilterChip = ({ active, onClick, children }) => (
   <button onClick={onClick}
-    className={`px-3 py-1.5 rounded-lg text-[12px] font-black border transition ${
-      active ? 'bg-[#003580] text-white border-[#003580]' : 'bg-white border-[#e7e7e7] text-[#1a1a1a] hover:border-[#0071c2]'
+    className={`px-3 py-1.5 rounded-xl text-[12px] font-black border transition active:scale-95 ${
+      active ? 'bg-[#003580] text-white border-[#003580] shadow-soft' : 'bg-white border-[#e7e7e7] text-[#1a1a1a] hover:border-[#0071c2]'
     }`}>
     {children}
   </button>
 );
 
 const Insight = ({ icon, label, val, sub }) => (
-  <div className="flex items-center gap-2.5 p-2 rounded-lg bg-[#f8f9fa] border border-[#eef2f6]">
-    <div className="w-8 h-8 rounded-lg bg-[#f0f5ff] flex items-center justify-center text-[#0071c2] shrink-0">{icon}</div>
+  <div className="flex items-center gap-2.5 p-2 rounded-xl bg-[#f8f9fa] border border-[#eef2f6]">
+    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#f0f5ff] to-[#dceaff] flex items-center justify-center text-[#0071c2] shrink-0 shadow-soft">{icon}</div>
     <div className="min-w-0">
       <div className="text-[9.5px] font-black uppercase tracking-widest text-[#9ca3af]">{label}</div>
       <div className="text-[13px] font-black text-[#003580] leading-tight">{val}</div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, ExternalLink, TrendingDown, ShieldCheck, Plane, Award, BadgeCheck, Search } from 'lucide-react';
+import { useTranslation } from '../store/useLangStore';
 
 /* ── Extract IATA code from "City (IATA)" format ── */
 function getIATA(str = '') {
@@ -91,38 +92,41 @@ const findOfficialAirline = (flight) => {
 };
 
 export default function FlightBookingModal({ flight, date, pax = 1, onClose }) {
+  const { t } = useTranslation();
   if (!flight) return null;
   const official = findOfficialAirline(flight);
   const aggregators = buildAggregators(flight, date, pax);
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-black/50 backdrop-blur-sm overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-black/55 backdrop-blur-md overflow-y-auto"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-auto page-fade max-h-[92vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-lift ring-1 ring-black/5 w-full max-w-2xl my-auto page-fade max-h-[92vh] overflow-y-auto">
 
         {/* ── Header ── */}
-        <div className="sticky top-0 z-10 bg-white flex items-start justify-between p-5 border-b border-[#f0f0f0]">
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md flex items-start justify-between p-5 border-b border-[#ececec] rounded-t-2xl">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Plane className="w-4 h-4 text-[#0071c2]" />
+              <span className="w-7 h-7 rounded-lg bg-[#0071c2]/10 flex items-center justify-center shrink-0">
+                <Plane className="w-4 h-4 text-[#0071c2]" />
+              </span>
               <p className="text-[14px] font-black text-[#003580] truncate">
                 {flight.from?.split('(')[0]?.trim()} → {flight.to?.split('(')[0]?.trim()}
               </p>
             </div>
             <p className="text-[12px] text-[#595959] font-semibold">
-              {flight.airline} · {flight.cabin} · {flight.stops === 0 ? 'Direct' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`}
+              {flight.airline} · {flight.cabin} · {flight.stops === 0 ? t('ui.booking.direct') : `${flight.stops} ${flight.stops > 1 ? t('ui.booking.stops') : t('ui.booking.stop')}`}
             </p>
           </div>
           <div className="text-right flex items-start gap-4 shrink-0 ml-3">
             <div>
               <p className="text-2xl font-black text-[#003580] leading-none tabular-nums">${flight.price}</p>
-              <p className="text-[11px] text-[#9ca3af] font-semibold">per person</p>
+              <p className="text-[11px] text-[#9ca3af] font-semibold">{t('ui.booking.perPerson')}</p>
             </div>
             <button onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-[#f5f5f5] transition text-[#9ca3af] hover:text-[#1a1a1a]"
-              aria-label="Close">
+              className="p-1.5 rounded-lg hover:bg-[#f0f3f7] transition-premium text-[#9ca3af] hover:text-[#1a1a1a] hover:rotate-90 active:scale-90"
+              aria-label={t('ui.booking.close')}>
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -134,15 +138,15 @@ export default function FlightBookingModal({ flight, date, pax = 1, onClose }) {
             <div className="flex items-center gap-2 mb-2.5">
               <BadgeCheck className="w-4 h-4 text-[#008009]" />
               <h3 className="text-[12px] font-black uppercase tracking-widest text-[#008009]">
-                Official airline · book direct
+                {t('ui.booking.officialHeading')}
               </h3>
               <span className="ml-1 text-[10px] font-black text-[#008009] bg-[#e8f5e9] border border-[#bbf7d0] px-1.5 py-0.5 rounded">
-                No middleman
+                {t('ui.booking.noMiddleman')}
               </span>
             </div>
 
             <a href={official.site} target="_blank" rel="noopener noreferrer"
-              className="block rounded-2xl border-2 border-[#008009]/40 bg-gradient-to-br from-[#e8f5e9] to-white p-4 hover:shadow-xl hover:-translate-y-0.5 transition-all">
+              className="block rounded-2xl border border-[#008009]/40 bg-gradient-to-br from-[#e8f5e9] to-white p-4 shadow-soft hover:shadow-lift hover:-translate-y-0.5 hover:border-[#008009]/60 transition-premium">
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 rounded-xl bg-white border border-[#e7e7e7] flex items-center justify-center text-2xl shrink-0">
                   {official.flag}
@@ -151,18 +155,18 @@ export default function FlightBookingModal({ flight, date, pax = 1, onClose }) {
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-[16px] font-black text-[#1a1a1a]">{flight.airline}</p>
                     <span className="text-[10px] font-black uppercase tracking-wider bg-[#008009] text-white px-2 py-0.5 rounded">
-                      Verified official
+                      {t('ui.booking.verifiedOfficial')}
                     </span>
                   </div>
                   <p className="text-[12px] text-[#155724] font-semibold mt-0.5">{official.tagline}</p>
                   <p className="text-[11px] text-[#595959] font-bold mt-1.5 truncate">🔗 {official.domain}</p>
                 </div>
                 <div className="flex items-center gap-1 text-[#008009] text-[13px] font-black shrink-0">
-                  Book <ExternalLink className="w-4 h-4" />
+                  {t('ui.booking.book')} <ExternalLink className="w-4 h-4" />
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {['Earn miles', 'Best seat selection', 'Direct refund', 'Free changes'].map(p => (
+                {[t('ui.booking.perkMiles'), t('ui.booking.perkSeat'), t('ui.booking.perkRefund'), t('ui.booking.perkChanges')].map(p => (
                   <span key={p} className="text-[10px] font-black bg-white/80 border border-[#bbf7d0] text-[#155724] px-2 py-1 rounded-md">✓ {p}</span>
                 ))}
               </div>
@@ -175,17 +179,17 @@ export default function FlightBookingModal({ flight, date, pax = 1, onClose }) {
           <div className="flex items-center gap-2 mb-2.5">
             <TrendingDown className="w-4 h-4 text-[#0071c2]" />
             <h3 className="text-[12px] font-black uppercase tracking-widest text-[#0071c2]">
-              {official ? 'Or compare prices on aggregators' : 'Compare prices across top sites'}
+              {official ? t('ui.booking.compareOr') : t('ui.booking.compareTop')}
             </h3>
           </div>
           <p className="text-[12px] text-[#595959] font-medium mb-4">
-            Same flight, different markup. Check 2–3 sites before you buy.
+            {t('ui.booking.compareBlurb')}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {aggregators.map(site => (
               <a key={site.name} href={site.url} target="_blank" rel="noopener noreferrer"
-                className={`bg-white border-2 ${site.borderCls} rounded-xl p-4 flex flex-col gap-2 transition hover:shadow-md group active:scale-[0.99]`}>
+                className={`bg-white border ${site.borderCls} rounded-xl p-4 flex flex-col gap-2 shadow-soft transition-premium hover:shadow-float hover:-translate-y-0.5 group active:scale-[0.99]`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <span className="text-2xl">{site.logo}</span>
@@ -197,7 +201,7 @@ export default function FlightBookingModal({ flight, date, pax = 1, onClose }) {
                 </div>
                 <p className="text-[11.5px] text-[#595959] font-semibold leading-snug">{site.tagline}</p>
                 <div className="flex items-center gap-1 text-[#0071c2] text-[12px] font-black group-hover:gap-2 transition-all mt-auto">
-                  <Search className="w-3 h-3" /> Search & compare <ExternalLink className="w-3 h-3" />
+                  <Search className="w-3 h-3" /> {t('ui.booking.searchCompare')} <ExternalLink className="w-3 h-3" />
                 </div>
               </a>
             ))}
@@ -205,10 +209,12 @@ export default function FlightBookingModal({ flight, date, pax = 1, onClose }) {
         </section>
 
         {/* ── Trust footer ── */}
-        <div className="px-5 py-5 mt-3 border-t border-[#f0f0f0] bg-[#f8f9fa] rounded-b-2xl flex items-center gap-2.5">
-          <ShieldCheck className="w-5 h-5 text-[#008009] shrink-0" />
+        <div className="px-5 py-5 mt-3 border-t border-[#ececec] bg-[#f8f9fa] rounded-b-2xl flex items-center gap-2.5">
+          <span className="w-9 h-9 rounded-full bg-[#e8f5e9] flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-5 h-5 text-[#008009]" />
+          </span>
           <p className="text-[11.5px] text-[#595959] font-semibold leading-snug">
-            <strong className="text-[#1a1a1a]">MAFTRAVEL never charges fees.</strong> Booking happens on the official airline site or trusted aggregator above — verify the final price &amp; baggage policy before paying.
+            <strong className="text-[#1a1a1a]">{t('ui.booking.trustTitle')}</strong> {t('ui.booking.trustBody')}
           </p>
         </div>
       </div>

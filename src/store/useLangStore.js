@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { translations } from '../utils/translations';
+import { translations } from '../i18n';
 
 const SUPPORTED = ['en', 'uz'];
 const readLang = () => {

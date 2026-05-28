@@ -21,10 +21,11 @@ const TourCard = ({ tour, budget }) => {
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 22 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20, transition: { duration: 0.15 } }}
-      className={`group bg-white rounded-[24px] border overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 flex flex-col ${
+      transition={{ duration: 0.32, ease: [0.4, 0, 0.2, 1] }}
+      className={`group lift bg-white rounded-2xl border overflow-hidden shadow-soft flex flex-col ${
         hasBudget && !fits
           ? 'border-[#e7e7e7] opacity-65 hover:opacity-100'
           : fits ? 'border-green-300' : 'border-[#e7e7e7]'
@@ -35,9 +36,9 @@ const TourCard = ({ tour, budget }) => {
         <img
           src={tour.image}
           alt={tour.title}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
         {/* Type badge */}
         <div className={`absolute top-4 left-4 px-3 py-1.5 rounded-full text-[10px] font-black text-white bg-gradient-to-r ${tour.badgeColor} shadow-lg`}>
@@ -47,14 +48,14 @@ const TourCard = ({ tour, budget }) => {
         {/* Budget-fit badge */}
         {hasBudget && (
           <div className={`absolute top-4 right-4 px-2.5 py-1 rounded-full text-[10px] font-black shadow-lg ${
-            fits ? 'bg-green-500 text-white' : 'bg-amber-400 text-[#1a1a1a]'
+            fits ? 'bg-green-500 text-white' : 'bg-gradient-to-r from-[#febb02] to-[#f5b942] text-[#1a1a1a]'
           }`}>
-            {fits ? '✓ В бюджете' : `+€${over.toLocaleString()}`}
+            {fits ? `✓ ${t('exoticTours.inBudget')}` : `+€${over.toLocaleString()}`}
           </div>
         )}
 
         {/* Title over image */}
-        <div className="absolute bottom-4 left-4 right-4">
+        <div className="absolute bottom-4 left-4 right-4 transition-transform duration-500 group-hover:-translate-y-0.5">
           <h3 className="text-white text-[19px] font-black leading-tight drop-shadow-lg">{tour.title}</h3>
           <p className="text-white/80 text-[12px] font-medium">{tour.tagline}</p>
         </div>
@@ -122,7 +123,7 @@ const TourCard = ({ tour, budget }) => {
           </div>
           <button
             onClick={openTour}
-            className="px-4 py-2.5 rounded-xl bg-[#003580] text-white font-black text-[12px] hover:bg-[#0071c2] transition-all active:scale-95 flex items-center gap-1.5 shrink-0"
+            className="btn-gold px-4 py-2.5 rounded-xl text-[12px] flex items-center gap-1.5 shrink-0"
           >
             <Sparkles className="w-3.5 h-3.5" /> View tour <ArrowRight className="w-3.5 h-3.5" />
           </button>
@@ -166,11 +167,12 @@ const ExoticTours = () => {
     <div className="min-h-screen bg-[#f8f9fa]">
 
       {/* Hero */}
-      <div className="relative bg-[#003580] overflow-hidden">
+      <div className="relative bg-gradient-to-br from-[#002250] via-[#003580] to-[#003580] overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[200%] bg-white/10 blur-[120px] rounded-full" />
           <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[200%] bg-[#0071c2]/30 blur-[100px] rounded-full" />
         </div>
+        <div className="absolute top-10 right-[12%] w-64 h-64 rounded-full bg-[#febb02]/10 blur-3xl pointer-events-none animate-float" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 pt-28 pb-20">
           <motion.div
@@ -205,7 +207,7 @@ const ExoticTours = () => {
                 { value: '4.8★', label: t('exotic.rating') },
               ].map(s => (
                 <div key={s.label}>
-                  <div className="text-[28px] font-black text-white">{s.value}</div>
+                  <div className="text-[28px] font-black text-gradient-gold">{s.value}</div>
                   <div className="text-[12px] text-white/50 font-medium">{s.label}</div>
                 </div>
               ))}
@@ -225,14 +227,14 @@ const ExoticTours = () => {
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-10">
 
         {/* Budget finder */}
-        <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 mb-6 flex flex-col md:flex-row md:items-center gap-4">
+        <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 mb-6 flex flex-col md:flex-row md:items-center gap-4 shadow-soft">
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0071c2] to-[#003580] flex items-center justify-center shadow-sm">
               <Wallet className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-[14px] font-black text-[#1a1a1a]">Подбор по бюджету</p>
-              <p className="text-[12px] text-[#9ca3af]">Введите бюджет на человека — покажем доступные туры</p>
+              <p className="text-[14px] font-black text-[#1a1a1a]">{t('exoticTours.budgetFinderTitle')}</p>
+              <p className="text-[12px] text-[#9ca3af]">{t('exoticTours.budgetFinderSub')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border-2 border-[#e7e7e7] focus-within:border-[#0071c2] transition flex-1 md:max-w-[240px]">
@@ -240,7 +242,7 @@ const ExoticTours = () => {
             <input
               type="number" min="0" step="500" value={budget || ''}
               onChange={e => setBudget(Math.max(0, Number(e.target.value)))}
-              placeholder="напр. 5000"
+              placeholder={t('exoticTours.budgetPlaceholder')}
               className="flex-1 w-full text-[15px] font-black text-[#1a1a1a] outline-none placeholder:text-[#c9d1d9] placeholder:font-medium" />
             {budget > 0 && (
               <button onClick={() => setBudget(0)} className="text-[#9ca3af] hover:text-[#1a1a1a]">
@@ -253,8 +255,8 @@ const ExoticTours = () => {
               affordableCount > 0 ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
             }`}>
               {affordableCount > 0
-                ? `✓ ${affordableCount} ${affordableCount === 1 ? 'тур' : 'туров'} в бюджете`
-                : 'Нет туров в этом бюджете'}
+                ? `✓ ${affordableCount} ${affordableCount === 1 ? t('exoticTours.tourSingular') : t('exoticTours.tourPlural')} ${t('exoticTours.inBudgetSuffix')}`
+                : t('exoticTours.noToursInBudget')}
             </span>
           )}
         </div>
@@ -289,16 +291,19 @@ const ExoticTours = () => {
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-20 bg-[#003580] rounded-[32px] p-10 md:p-16 text-center">
-          <h2 className="text-[36px] font-black text-white mb-4">
-            {t('exotic.ctaTitle')}
-          </h2>
-          <p className="text-[16px] text-white/70 mb-8 max-w-lg mx-auto">
-            {t('exotic.ctaSub')}
-          </p>
-          <button className="px-10 py-4 rounded-2xl bg-white text-[#003580] font-black text-[15px] hover:bg-white/90 transition-all active:scale-95">
-            {t('exotic.ctaBtn')}
-          </button>
+        <div className="relative mt-20 bg-gradient-to-br from-[#002250] via-[#003580] to-[#003580] rounded-[32px] p-10 md:p-16 text-center overflow-hidden shadow-lift">
+          <div className="absolute -top-16 -right-10 w-64 h-64 rounded-full bg-[#febb02]/10 blur-3xl pointer-events-none animate-float" />
+          <div className="relative">
+            <h2 className="text-[36px] font-black text-white mb-4">
+              {t('exotic.ctaTitle')}
+            </h2>
+            <p className="text-[16px] text-white/70 mb-8 max-w-lg mx-auto">
+              {t('exotic.ctaSub')}
+            </p>
+            <button className="btn-gold px-10 py-4 rounded-2xl text-[15px]">
+              {t('exotic.ctaBtn')}
+            </button>
+          </div>
         </div>
       </div>
     </div>

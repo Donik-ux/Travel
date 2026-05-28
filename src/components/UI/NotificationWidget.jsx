@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BellRing, BellOff, X, Gift, Plane, Package, Sparkles } from 'lucide-react';
+import { useTranslation } from '../../store/useLangStore';
 
 const DEALS = [
   { id: 1, icon: '✈️', title: 'Flash Sale: Dubai Flights', body: 'From $199! Only 48 hours left. Book now →', tag: 'flight' },
@@ -19,6 +20,7 @@ function markShown(id) {
 }
 
 export default function NotificationWidget() {
+  const { t } = useTranslation();
   const [permission, setPermission] = useState(localStorage.getItem(PERM_KEY) || 'default');
   const [toast, setToast] = useState(null);
   const [showBanner, setShowBanner] = useState(false);
@@ -78,16 +80,16 @@ export default function NotificationWidget() {
               <BellRing className="w-4 h-4 text-yellow-300" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold mb-0.5">Get notified about deals 🎯</p>
-              <p className="text-white/60 text-xs">Be first to know about flash sales and exclusive offers.</p>
+              <p className="text-sm font-bold mb-0.5">{t('ui.notify.title')}</p>
+              <p className="text-white/60 text-xs">{t('ui.notify.body')}</p>
               <div className="flex gap-2 mt-3">
                 <button onClick={requestPermission}
                   className="px-4 py-1.5 rounded-lg bg-white text-[#003580] text-xs font-black uppercase tracking-widest hover:bg-white/90 transition-all">
-                  Allow
+                  {t('ui.notify.allow')}
                 </button>
                 <button onClick={deny}
                   className="px-4 py-1.5 rounded-lg border border-white/20 text-white/60 text-xs font-bold hover:bg-white/10 transition-all">
-                  Not now
+                  {t('ui.notify.notNow')}
                 </button>
               </div>
             </div>

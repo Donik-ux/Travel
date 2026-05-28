@@ -17,21 +17,27 @@ import { handleImgError } from '../utils/imageFallback';
 import { heroFor } from '../utils/destinationImages';
 import { toast } from '../components/Toast';
 import SmartImage from '../components/SmartImage';
+import { useTranslation } from '../store/useLangStore';
 
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }) : '—';
 
+// Lightweight {placeholder} interpolation on top of the plain t() lookup.
+const fill = (str, vars = {}) =>
+  String(str).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
+
 const STAT_ROWS = [
-  { icon: Plane,       label: 'Flights',    key: 'flight' },
-  { icon: Hotel,       label: 'Stay',       key: 'accommodation' },
-  { icon: Utensils,    label: 'Food',       key: 'food' },
-  { icon: Bus,         label: 'Transport',  key: 'transport' },
-  { icon: Activity,    label: 'Activities', key: 'activities' },
-  { icon: ShoppingBag, label: 'Shopping',   key: 'shopping' },
+  { icon: Plane,       statKey: 'flight',        key: 'flight' },
+  { icon: Hotel,       statKey: 'accommodation', key: 'accommodation' },
+  { icon: Utensils,    statKey: 'food',          key: 'food' },
+  { icon: Bus,         statKey: 'transport',     key: 'transport' },
+  { icon: Activity,    statKey: 'activities',    key: 'activities' },
+  { icon: ShoppingBag, statKey: 'shopping',      key: 'shopping' },
 ];
 
 export default function TripPlan() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const user = useAuthStore(s => s.user);
   const addBooking = useAdminStore(s => s.addBooking);
@@ -125,7 +131,7 @@ export default function TripPlan() {
         try { result = await generateAiItinerary(params); }
         catch (e) {
           console.warn('Grok plan fallback:', e.message);
-          if (/timed out/i.test(e.message)) toast.info('AI took too long', 'Falling back to Smart Match plan.');
+          if (/timed out/i.test(e.message)) toast.info(t('tripPlan.aiSlowTitle'), t('tripPlan.aiSlowBody'));
         }
       }
       if (!result) result = await generateItinerary(params);
@@ -141,7 +147,7 @@ export default function TripPlan() {
       }
       setPlan(result);
     } catch (err) {
-      setError('Could not build the detailed plan right now. Please try again.');
+      setError(t('tripPlan.genericError'));
     } finally {
       setLoading(false);
     }
@@ -151,16 +157,21 @@ export default function TripPlan() {
   if (!item || !type) {
     return (
       <div className="min-h-screen bg-[#f5f5f5] flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl border border-[#e7e7e7] p-8 max-w-md w-full text-center shadow-sm">
-          <AlertCircle className="w-10 h-10 text-[#febb02] mx-auto mb-3" />
-          <h2 className="text-xl font-black text-[#1a1a1a] mb-1">Pick a trip first</h2>
-          <p className="text-[#595959] text-[14px] font-medium mb-5">
-            Head to AI Trip Studio, set your balance, and choose one of the 4 packages.
-          </p>
-          <button onClick={() => navigate('/hot-tours')}
-            className="px-5 py-3 rounded-lg bg-[#febb02] hover:bg-[#ffb700] text-[#1a1a1a] text-[13px] font-black transition active:scale-95 inline-flex items-center gap-2">
-            <Sparkles className="w-4 h-4" /> Open AI Trip Studio
-          </button>
+        <div className="bg-white rounded-3xl border border-[#e7e7e7] p-10 max-w-md w-full text-center shadow-float relative overflow-hidden">
+          <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-[#febb02]/15 blur-3xl pointer-events-none animate-float" />
+          <div className="relative">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#febb02] to-[#e0a435] flex items-center justify-center mx-auto mb-4 rotate-3 shadow-lift">
+              <AlertCircle className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-2xl font-black text-[#1a1a1a] mb-1.5">{t('tripPlan.noItemTitle')}</h2>
+            <p className="text-[#595959] text-[14px] font-medium mb-6 leading-relaxed">
+              {t('tripPlan.noItemSub')}
+            </p>
+            <button onClick={() => navigate('/hot-tours')}
+              className="btn-gold px-6 py-3.5 text-[13px] inline-flex items-center gap-2">
+              <Sparkles className="w-4 h-4" /> {t('tripPlan.openStudio')}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -183,12 +194,12 @@ export default function TripPlan() {
       plan,
     });
     setSaved(true);
-    toast.success('Trip plan saved', `Open "My Plans" anytime to view ${b.itemName}.`);
+    toast.success(t('tripPlan.savedToastTitle'), fill(t('tripPlan.savedToastBody'), { name: b.itemName }));
   };
 
   /* ── Print friendly view ── */
   const handlePrint = () => {
-    toast.info('Opening print dialog', 'Use “Save as PDF” in the print sheet to keep a copy.');
+    toast.info(t('tripPlan.printToastTitle'), t('tripPlan.printToastBody'));
     setTimeout(() => window.print(), 200);
   };
 
@@ -200,9 +211,9 @@ export default function TripPlan() {
     }
     try {
       await navigator.clipboard.writeText(text);
-      toast.success('Plan copied', 'Share it with anyone — link to MAFTRAVEL inside.');
+      toast.success(t('tripPlan.planCopiedTitle'), t('tripPlan.planCopiedBody'));
     } catch {
-      toast.error('Could not copy', 'Your browser blocked clipboard access.');
+      toast.error(t('tripPlan.copyFailTitle'), t('tripPlan.copyFailBody'));
     }
   };
 
@@ -211,7 +222,7 @@ export default function TripPlan() {
     const html = buildPdfHtml({ item, plan, travelers, travelDate, name });
     const win = window.open('', '_blank');
     if (!win) {
-      toast.error('Pop-up blocked', 'Allow pop-ups to download your plan.');
+      toast.error(t('tripPlan.popupBlockedTitle'), t('tripPlan.popupBlockedBody'));
       return;
     }
     win.document.write(html);
@@ -225,19 +236,20 @@ export default function TripPlan() {
     <div className="min-h-screen bg-[#f5f5f5]">
 
       {/* ── HEADER ────────────────────────────────────────────── */}
-      <section className="bg-[#003580] text-white">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+      <section className="relative bg-gradient-to-br from-[#002250] via-[#003580] to-[#0071c2] text-white overflow-hidden">
+        <div className="absolute -top-20 -right-12 w-64 h-64 rounded-full bg-[#febb02]/15 blur-3xl pointer-events-none animate-float" />
+        <div className="relative max-w-6xl mx-auto px-4 md:px-8 py-7">
           <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-white/70 hover:text-white text-[12px] font-bold mb-3 transition">
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" /> {t('tripPlan.back')}
           </button>
-          <div className="flex items-center gap-2 text-[#febb02] text-[11px] font-black uppercase tracking-widest mb-1">
-            <Sparkles className="w-3.5 h-3.5" /> Your trip plan · 100% free
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#febb02] text-[#1a1a1a] text-[10px] font-black uppercase tracking-widest mb-2.5 shadow-float">
+            <Sparkles className="w-3.5 h-3.5" /> {t('tripPlan.freeBadge')}
           </div>
           <h1 className="text-2xl md:text-3xl font-black tracking-tight leading-tight">
             {item.destination || item.name}
           </h1>
           <p className="text-[13px] text-white/70 font-medium mt-1">
-            A full day-by-day plan for ${totalNice} — places to visit, where to eat, how to get around.
+            {fill(t('tripPlan.heroSub'), { total: totalNice })}
           </p>
         </div>
       </section>
@@ -250,26 +262,28 @@ export default function TripPlan() {
           <div className="lg:col-span-2 space-y-5" id="print-plan">
 
             {/* ── Berlin-style header summary ── */}
-            <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 md:p-6 shadow-sm">
-              <div className="text-[10px] font-black uppercase tracking-widest text-[#0071c2] mb-1.5">Travel Plan</div>
+            <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 md:p-6 shadow-soft">
+              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#0071c2] mb-1.5">
+                <MapIcon className="w-3.5 h-3.5" /> {t('tripPlan.sectionLabel')}
+              </div>
               <h2 className="text-2xl md:text-3xl font-black text-[#1a1a1a] tracking-tight leading-tight">
-                {plan?.header?.title || `Travel Plan – ${item.destination || item.name}`}
+                {plan?.header?.title || fill(t('tripPlan.titleFallback'), { destination: item.destination || item.name })}
               </h2>
               <div className="mt-4 grid sm:grid-cols-3 gap-3">
-                <HeaderStat icon={<Calendar className="w-3.5 h-3.5" />} label="Travel dates"
-                  value={plan?.header?.dates || (travelDate ? fmtDate(travelDate) : `${item.duration} days`)} />
-                <HeaderStat icon={<Plane className="w-3.5 h-3.5" />} label="Route"
+                <HeaderStat icon={<Calendar className="w-3.5 h-3.5" />} label={t('tripPlan.travelDates')}
+                  value={plan?.header?.dates || (travelDate ? fmtDate(travelDate) : fill(t('tripPlan.daysValue'), { days: item.duration }))} />
+                <HeaderStat icon={<Plane className="w-3.5 h-3.5" />} label={t('tripPlan.route')}
                   value={plan?.header?.route || (fromCity ? `${fromCity} → ${item.destination || item.name} → ${fromCity}` : '—')} />
-                <HeaderStat icon={<Sparkles className="w-3.5 h-3.5" />} label="Purpose"
+                <HeaderStat icon={<Sparkles className="w-3.5 h-3.5" />} label={t('tripPlan.purpose')}
                   value={plan?.header?.purpose || purpose} />
               </div>
             </div>
 
             {/* Hero card */}
             {item.image && (
-              <div className="relative h-56 md:h-72 rounded-2xl overflow-hidden shadow-sm">
+              <div className="relative h-56 md:h-72 rounded-2xl overflow-hidden shadow-float">
                 <SmartImage src={item.image} alt={item.destination || item.name} wrapperClassName="absolute inset-0" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
                 <div className="absolute bottom-4 left-5 right-5 text-white">
                   <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/80 mb-1">
                     <MapPin className="w-3 h-3 text-[#febb02]" /> {item.destination}
@@ -277,8 +291,8 @@ export default function TripPlan() {
                   <h2 className="text-2xl md:text-3xl font-black leading-tight">{item.name}</h2>
                   <div className="flex items-center gap-3 mt-2 text-[12px] font-bold">
                     {item.rating && <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 fill-[#febb02] text-[#febb02]" /> {item.rating}</span>}
-                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {item.duration} days</span>
-                    <span className="px-2 py-0.5 rounded-md bg-white/15 backdrop-blur capitalize">{item.category || 'standard'}</span>
+                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {fill(t('tripPlan.daysValue'), { days: item.duration })}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-white/15 backdrop-blur capitalize">{item.category || t('tripPlan.categoryStandard')}</span>
                   </div>
                 </div>
               </div>
@@ -286,11 +300,11 @@ export default function TripPlan() {
 
             {/* Description / includes */}
             {(item.description || item.includes?.length) && (
-              <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-sm">
+              <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-soft">
                 {item.description && <p className="text-[14px] text-[#1a1a1a] font-medium leading-relaxed mb-4">{item.description}</p>}
                 {item.includes?.length > 0 && (
                   <>
-                    <div className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">What's covered in your $${totalNice}</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">{fill(t('tripPlan.whatsCovered'), { total: totalNice })}</div>
                     <ul className="grid sm:grid-cols-2 gap-x-4 gap-y-1.5">
                       {item.includes.map((inc, i) => (
                         <li key={i} className="flex items-start gap-2 text-[13px] text-[#1a1a1a] font-semibold">
@@ -309,14 +323,14 @@ export default function TripPlan() {
               const fullAddress = [h.name, h.address].filter(Boolean).join(', ');
               const url = mapsUrlFromAddress(fullAddress || h.name);
               return (
-                <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-sm">
+                <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-soft">
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl bg-[#f0f5ff] flex items-center justify-center text-[#0071c2] shrink-0">
                       <Hotel className="w-5 h-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[#0071c2]">Your stay</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[#0071c2]">{t('tripPlan.yourStay')}</span>
                         {h.stars && (
                           <span className="text-[10px] font-black text-[#a45e00] bg-[#fff7e6] px-2 py-0.5 rounded-md flex items-center gap-0.5">
                             {h.stars}★
@@ -336,7 +350,7 @@ export default function TripPlan() {
                     {url && (
                       <a href={url} target="_blank" rel="noreferrer noopener"
                         className="px-3 py-2 rounded-lg bg-[#febb02] hover:bg-[#ffb700] text-[#1a1a1a] text-[11px] font-black flex items-center gap-1 active:scale-95 transition shrink-0">
-                        <Navigation className="w-3.5 h-3.5" /> Navigate
+                        <Navigation className="w-3.5 h-3.5" /> {t('tripPlan.navigate')}
                       </a>
                     )}
                   </div>
@@ -345,17 +359,19 @@ export default function TripPlan() {
             })()}
 
             {/* Budget breakdown */}
-            <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-sm">
+            <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-soft">
               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-3">
-                <Wallet className="w-3.5 h-3.5 text-[#0071c2]" /> Where your $${totalNice} goes
+                <Wallet className="w-3.5 h-3.5 text-[#0071c2]" /> {fill(t('tripPlan.whereMoneyGoes'), { total: totalNice })}
               </div>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-2.5">
                 {STAT_ROWS.map((s, i) => {
                   const val = plan?.budgetBreakdown?.[s.key] ?? Math.round(item.price / STAT_ROWS.length);
                   return (
-                    <div key={i} className="bg-[#f8f9fa] border border-[#eef2f6] rounded-xl p-3 text-center">
-                      <s.icon className="w-4 h-4 text-[#0071c2] mx-auto mb-1" />
-                      <div className="text-[10px] uppercase tracking-widest font-black text-[#9ca3af]">{s.label}</div>
+                    <div key={i} className="group bg-gradient-to-b from-white to-[#f8f9fa] border border-[#eef2f6] rounded-xl p-3 text-center transition-all hover:border-[#cfe2f7] hover:shadow-soft">
+                      <div className="w-8 h-8 rounded-lg bg-[#f0f5ff] flex items-center justify-center mx-auto mb-1.5 transition-colors group-hover:bg-[#dceaff]">
+                        <s.icon className="w-4 h-4 text-[#0071c2]" />
+                      </div>
+                      <div className="text-[10px] uppercase tracking-widest font-black text-[#9ca3af]">{t(`tripPlan.stat.${s.statKey}`)}</div>
                       <div className="text-[14px] font-black text-[#003580]">${val.toLocaleString()}</div>
                     </div>
                   );
@@ -364,12 +380,12 @@ export default function TripPlan() {
             </div>
 
             {/* Day-by-day plan */}
-            <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-sm">
+            <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-soft">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[18px] font-black text-[#1a1a1a]">Day-by-day plan</h3>
+                <h3 className="text-[18px] font-black text-[#1a1a1a]">{t('tripPlan.dayByDay')}</h3>
                 {plan?.source && (
                   <span className="text-[10px] font-black uppercase tracking-widest text-[#0071c2] bg-[#f0f5ff] px-2 py-1 rounded-md">
-                    {plan.source === 'grok' ? 'AI · Grok' : 'Smart Match'}
+                    {plan.source === 'grok' ? t('tripPlan.sourceAi') : t('tripPlan.sourceSmart')}
                   </span>
                 )}
               </div>
@@ -378,7 +394,7 @@ export default function TripPlan() {
                 <div className="py-12 text-center">
                   <Loader2 className="w-8 h-8 animate-spin text-[#0071c2] mx-auto mb-2" />
                   <p className="text-[13px] font-bold text-[#595959]">
-                    {isAiAvailable() ? 'Grok is laying out every day for you…' : 'Building your plan…'}
+                    {isAiAvailable() ? t('tripPlan.buildingAi') : t('tripPlan.buildingSmart')}
                   </p>
                 </div>
               )}
@@ -386,7 +402,7 @@ export default function TripPlan() {
               {error && (
                 <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-[13px] font-semibold flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" /> {error}
-                  <button onClick={runGenerate} className="ml-auto text-[12px] font-black underline">Retry</button>
+                  <button onClick={runGenerate} className="ml-auto text-[12px] font-black underline">{t('tripPlan.retry')}</button>
                 </div>
               )}
 
@@ -395,13 +411,13 @@ export default function TripPlan() {
                 return (
                 <div className="space-y-3">
                   {/* Running budget tracker */}
-                  <div className="rounded-xl border border-[#e7e7e7] bg-white px-4 py-3 flex items-center gap-3 flex-wrap">
+                  <div className="rounded-xl border border-[#e7e7e7] bg-gradient-to-br from-white to-[#f8f9fa] px-4 py-3.5 flex items-center gap-3 flex-wrap shadow-soft">
                     <Wallet className="w-4 h-4 text-[#0071c2] shrink-0" />
-                    <div className="text-[12px] font-black uppercase tracking-widest text-[#9ca3af]">Spending plan</div>
+                    <div className="text-[12px] font-black uppercase tracking-widest text-[#9ca3af]">{t('tripPlan.spendingPlan')}</div>
                     <div className="flex-1 min-w-32">
-                      <div className="h-2 bg-[#f0f0f0] rounded-full overflow-hidden">
+                      <div className="h-2.5 bg-[#f0f0f0] rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${totalDayCosts > Number(item.price) ? 'bg-red-500' : 'bg-[#febb02]'}`}
+                          className={`h-full rounded-full transition-all duration-700 ${totalDayCosts > Number(item.price) ? 'bg-red-500' : 'bg-gradient-to-r from-[#febb02] to-[#f5b942]'}`}
                           style={{ width: `${Math.min(100, (totalDayCosts / Math.max(1, Number(item.price))) * 100)}%` }}
                         />
                       </div>
@@ -411,7 +427,7 @@ export default function TripPlan() {
                     </div>
                     {totalDayCosts <= Number(item.price) && (
                       <span className="text-[10px] font-black text-[#008009] bg-[#e8f5e9] px-2 py-0.5 rounded">
-                        ✓ ${(Number(item.price) - totalDayCosts).toLocaleString()} buffer
+                        {fill(t('tripPlan.buffer'), { amount: (Number(item.price) - totalDayCosts).toLocaleString() })}
                       </span>
                     )}
                   </div>
@@ -421,25 +437,26 @@ export default function TripPlan() {
                     const runningTotal = plan.days.slice(0, dayIdx + 1).reduce((s, x) => s + (Number(x.cost) || 0), 0);
                     return (
                     <motion.div key={d.day} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
-                      className="rounded-xl border border-[#e7e7e7] bg-[#f8f9fa] overflow-hidden">
-                      <div className="px-4 py-3 bg-white border-b border-[#f0f0f0] flex items-center gap-3 flex-wrap">
-                        <div className="w-10 h-10 rounded-lg bg-[#003580] text-white text-[13px] font-black flex items-center justify-center shrink-0">D{d.day}</div>
+                      className="relative rounded-xl border border-[#e7e7e7] bg-[#f8f9fa] overflow-hidden shadow-soft">
+                      <span className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#0071c2] to-[#003580]" />
+                      <div className="px-4 py-3 pl-5 bg-white border-b border-[#f0f0f0] flex items-center gap-3 flex-wrap">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#003580] to-[#0071c2] text-white text-[13px] font-black flex items-center justify-center shrink-0 shadow-soft">D{d.day}</div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[#0071c2]">📅 Day {d.day}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#0071c2]">{fill(t('tripPlan.dayLabel'), { day: d.day })}</span>
                             {d.weekday && <span className="text-[10px] font-bold text-[#9ca3af]">· {d.weekday}{d.date ? `, ${d.date.split(',').slice(-1)[0].trim()}` : ''}</span>}
                             {d.label && <span className="text-[10px] font-black text-[#a45e00] bg-[#fff7e6] px-2 py-0.5 rounded-md">{d.label}</span>}
                           </div>
-                          <div className="text-[14px] font-black text-[#1a1a1a] mt-0.5">{d.title || `Day ${d.day}`}</div>
+                          <div className="text-[14px] font-black text-[#1a1a1a] mt-0.5">{d.title || `${t('tripPlan.day')} ${d.day}`}</div>
                           <div className="text-[12px] text-[#595959] font-semibold">
-                            {d.place || item.destination}{d.cost ? ` · est. $${d.cost}` : ''}
+                            {d.place || item.destination}{d.cost ? ` · ${fill(t('tripPlan.estCost'), { cost: d.cost })}` : ''}
                           </div>
                         </div>
                         {dayMap && (
                           <a href={dayMap} target="_blank" rel="noreferrer noopener"
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-[#f0f5ff] hover:bg-[#dceaff] text-[#0071c2] text-[11px] font-black transition"
                             title="Open this day's route in Google Maps">
-                            <MapIcon className="w-3.5 h-3.5" /> Day map <ExternalLink className="w-3 h-3" />
+                            <MapIcon className="w-3.5 h-3.5" /> {t('tripPlan.dayMap')} <ExternalLink className="w-3 h-3" />
                           </a>
                         )}
                       </div>
@@ -473,7 +490,7 @@ export default function TripPlan() {
                                       title="Open in Google Maps">
                                       <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#febb02]" />
                                       <span className="break-words">
-                                        <span className="text-[#9ca3af] font-black uppercase tracking-wider text-[10px] mr-1">Location:</span>
+                                        <span className="text-[#9ca3af] font-black uppercase tracking-wider text-[10px] mr-1">{t('tripPlan.location')}</span>
                                         <span className="text-[#0071c2] group-hover/loc:underline">{ev.address}</span>
                                         {ev.district && <span className="text-[#595959]"> · {ev.district}</span>}
                                         <ExternalLink className="inline w-2.5 h-2.5 ml-1 mb-0.5 opacity-50" />
@@ -484,9 +501,9 @@ export default function TripPlan() {
                                   <div className="flex items-start gap-1.5 text-[12px] text-[#1a1a1a] font-semibold mt-0.5">
                                     <span className="text-[14px] leading-none mt-0.5">💰</span>
                                     <span>
-                                      <span className="text-[#9ca3af] font-black uppercase tracking-wider text-[10px] mr-1">Cost:</span>
+                                      <span className="text-[#9ca3af] font-black uppercase tracking-wider text-[10px] mr-1">{t('tripPlan.cost')}</span>
                                       <span className={ev.price && /free|0/i.test(ev.price) ? 'text-[#008009] font-black' : 'text-[#003580] font-black'}>
-                                        {ev.price || 'Free'}
+                                        {ev.price || t('tripPlan.free')}
                                       </span>
                                       {ev.duration && <span className="text-[#9ca3af] font-bold ml-2">· {ev.duration}</span>}
                                     </span>
@@ -527,13 +544,13 @@ export default function TripPlan() {
                       {/* Daily spend summary */}
                       <div className="px-4 py-2.5 bg-white border-t border-[#e7e7e7] flex items-center justify-between flex-wrap gap-2">
                         <div className="text-[11px] font-black uppercase tracking-widest text-[#9ca3af] flex items-center gap-1.5">
-                          <Wallet className="w-3.5 h-3.5 text-[#0071c2]" /> Spent today
+                          <Wallet className="w-3.5 h-3.5 text-[#0071c2]" /> {t('tripPlan.spentToday')}
                         </div>
                         <div className="flex items-center gap-3 text-[12px] font-black">
                           <span className="text-[#1a1a1a]">${(Number(d.cost) || 0).toLocaleString()}</span>
                           <span className="text-[#9ca3af] font-bold">·</span>
                           <span className="text-[#595959]">
-                            Running total <span className="text-[#003580]">${runningTotal.toLocaleString()}</span>
+                            {t('tripPlan.runningTotal')} <span className="text-[#003580]">${runningTotal.toLocaleString()}</span>
                             <span className="text-[#9ca3af] font-bold"> / ${Number(item.price).toLocaleString()}</span>
                           </span>
                         </div>
@@ -548,17 +565,17 @@ export default function TripPlan() {
 
             {/* ── Emergency contacts (per country) ── */}
             {plan?.emergency && (
-              <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-sm">
+              <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-soft">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center text-red-600 shrink-0">
                     <ShieldAlert className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-[16px] font-black text-[#1a1a1a]">
-                      Emergency contacts in {plan.emergency.country} {plan.emergency.flag}
+                      {fill(t('tripPlan.emergencyTitle'), { country: plan.emergency.country })} {plan.emergency.flag}
                     </h3>
                     <p className="text-[11px] text-[#9ca3af] font-bold uppercase tracking-widest">
-                      Save these numbers before you fly
+                      {t('tripPlan.emergencySub')}
                     </p>
                   </div>
                 </div>
@@ -591,10 +608,10 @@ export default function TripPlan() {
 
             {/* Travel tips */}
             {plan?.travelTips?.length > 0 && (
-              <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-sm">
+              <div className="bg-white border border-[#e7e7e7] rounded-2xl p-5 shadow-soft">
                 <div className="flex items-center gap-2 mb-3">
                   <Lightbulb className="w-4 h-4 text-[#febb02]" />
-                  <h3 className="text-[16px] font-black text-[#1a1a1a]">Local tips</h3>
+                  <h3 className="text-[16px] font-black text-[#1a1a1a]">{t('tripPlan.localTips')}</h3>
                 </div>
                 <ul className="grid sm:grid-cols-2 gap-x-4 gap-y-2">
                   {plan.travelTips.map((tip, i) => (
@@ -609,27 +626,30 @@ export default function TripPlan() {
 
           {/* ── Right: Actions ── */}
           <div className="lg:col-span-1">
-            <div className="bg-white border border-[#e7e7e7] rounded-2xl overflow-hidden sticky top-[80px] shadow-sm no-print">
+            <div className="bg-white border border-[#e7e7e7] rounded-2xl overflow-hidden sticky top-[80px] shadow-float no-print">
 
-              <div className="bg-[#003580] text-white px-5 py-4">
-                <div className="text-[10px] font-black uppercase tracking-widest text-white/70 mb-0.5">Total trip cost</div>
-                <div className="text-[28px] font-black text-[#febb02]">${totalNice}</div>
-                <div className="text-[11px] font-bold text-white/70">for {item.duration} days · {travelers} traveler{travelers === 1 ? '' : 's'}</div>
+              <div className="relative bg-gradient-to-br from-[#002250] to-[#0071c2] text-white px-5 py-5 overflow-hidden">
+                <div className="absolute -top-12 -right-8 w-40 h-40 rounded-full bg-[#febb02]/15 blur-2xl pointer-events-none" />
+                <div className="relative">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-white/70 mb-0.5">{t('tripPlan.totalTripCost')}</div>
+                  <div className="text-[30px] font-black text-gradient-gold leading-none">${totalNice}</div>
+                  <div className="text-[11px] font-bold text-white/70 mt-1.5">{fill(t(travelers === 1 ? 'tripPlan.forDaysTravelers' : 'tripPlan.forDaysTravelersPlural'), { days: item.duration, count: travelers })}</div>
+                </div>
               </div>
 
               <div className="p-5 space-y-3">
-                <Field label="Your name" icon={<Users className="w-3.5 h-3.5" />}>
-                  <input type="text" placeholder="Your name" value={name} onChange={e => setName(e.target.value)}
+                <Field label={t('tripPlan.yourName')} icon={<Users className="w-3.5 h-3.5" />}>
+                  <input type="text" placeholder={t('tripPlan.yourNamePh')} value={name} onChange={e => setName(e.target.value)}
                     className="w-full bg-transparent outline-none text-[14px] font-semibold text-[#1a1a1a] placeholder:text-[#b0b0b0]" />
                 </Field>
 
-                <Field label="From city" icon={<Plane className="w-3.5 h-3.5" />}>
-                  <input type="text" placeholder="Bishkek" value={fromCity} onChange={e => setFromCity(e.target.value)}
+                <Field label={t('tripPlan.fromCity')} icon={<Plane className="w-3.5 h-3.5" />}>
+                  <input type="text" placeholder={t('tripPlan.fromCityPh')} value={fromCity} onChange={e => setFromCity(e.target.value)}
                     className="w-full bg-transparent outline-none text-[14px] font-semibold text-[#1a1a1a] placeholder:text-[#b0b0b0]" />
                 </Field>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <Field label="Depart" icon={<Calendar className="w-3.5 h-3.5" />}>
+                  <Field label={t('tripPlan.depart')} icon={<Calendar className="w-3.5 h-3.5" />}>
                     <input type="date" value={travelDate} min={new Date().toISOString().split('T')[0]}
                       onChange={e => {
                         const v = e.target.value;
@@ -642,27 +662,27 @@ export default function TripPlan() {
                       }}
                       className="w-full bg-transparent outline-none text-[14px] font-semibold text-[#1a1a1a]" />
                   </Field>
-                  <Field label="Return" icon={<Calendar className="w-3.5 h-3.5" />}>
+                  <Field label={t('tripPlan.return')} icon={<Calendar className="w-3.5 h-3.5" />}>
                     <input type="date" value={returnDate} min={travelDate || new Date().toISOString().split('T')[0]}
                       onChange={e => setReturnDate(e.target.value)}
                       className="w-full bg-transparent outline-none text-[14px] font-semibold text-[#1a1a1a]" />
                   </Field>
                 </div>
 
-                <Field label="Trip purpose" icon={<Sparkles className="w-3.5 h-3.5" />}>
+                <Field label={t('tripPlan.tripPurpose')} icon={<Sparkles className="w-3.5 h-3.5" />}>
                   <select value={purpose} onChange={e => setPurpose(e.target.value)}
                     className="w-full bg-transparent outline-none text-[13px] font-semibold text-[#1a1a1a] cursor-pointer">
-                    <option>Tourism and cultural exploration</option>
-                    <option>Family vacation</option>
-                    <option>Honeymoon</option>
-                    <option>Adventure & nature</option>
-                    <option>Business + leisure</option>
-                    <option>Religious pilgrimage</option>
-                    <option>Shopping &amp; food</option>
+                    <option value="Tourism and cultural exploration">{t('tripPlan.purposeTourism')}</option>
+                    <option value="Family vacation">{t('tripPlan.purposeFamily')}</option>
+                    <option value="Honeymoon">{t('tripPlan.purposeHoneymoon')}</option>
+                    <option value="Adventure & nature">{t('tripPlan.purposeAdventure')}</option>
+                    <option value="Business + leisure">{t('tripPlan.purposeBusiness')}</option>
+                    <option value="Religious pilgrimage">{t('tripPlan.purposeReligious')}</option>
+                    <option value="Shopping & food">{t('tripPlan.purposeShopping')}</option>
                   </select>
                 </Field>
 
-                <Field label="Travelers" icon={<Users className="w-3.5 h-3.5" />}>
+                <Field label={t('tripPlan.travelers')} icon={<Users className="w-3.5 h-3.5" />}>
                   <div className="flex items-center gap-2">
                     <button type="button" onClick={() => setTravelers(t => Math.max(1, t - 1))}
                       className="w-7 h-7 rounded-md bg-[#f0f5ff] text-[#0071c2] text-[16px] font-black hover:bg-[#dceaff] active:scale-95 transition">−</button>
@@ -674,33 +694,33 @@ export default function TripPlan() {
 
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <button onClick={handleSave} disabled={saved}
-                    className={`px-3 py-3 rounded-xl text-[12px] font-black transition active:scale-95 flex items-center justify-center gap-1.5 ${saved ? 'bg-[#e8f5e9] text-[#008009] cursor-default' : 'bg-[#febb02] hover:bg-[#ffb700] text-[#1a1a1a]'}`}>
-                    {saved ? (<><Check className="w-4 h-4" /> Saved</>) : (<><Save className="w-4 h-4" /> Save plan</>)}
+                    className={`px-3 py-3 rounded-xl text-[12px] font-black transition active:scale-95 flex items-center justify-center gap-1.5 ${saved ? 'bg-[#e8f5e9] text-[#008009] cursor-default' : 'btn-gold'}`}>
+                    {saved ? (<><Check className="w-4 h-4" /> {t('tripPlan.saved')}</>) : (<><Save className="w-4 h-4" /> {t('tripPlan.savePlan')}</>)}
                   </button>
                   <button onClick={handleShare}
                     className="px-3 py-3 rounded-xl border-2 border-[#0071c2] text-[#0071c2] text-[12px] font-black hover:bg-[#f0f5ff] transition active:scale-95 flex items-center justify-center gap-1.5">
-                    <Share2 className="w-4 h-4" /> Share
+                    <Share2 className="w-4 h-4" /> {t('tripPlan.share')}
                   </button>
                   <button onClick={handlePrint}
                     className="px-3 py-3 rounded-xl border-2 border-[#e7e7e7] text-[#1a1a1a] text-[12px] font-black hover:border-[#0071c2] hover:bg-[#f0f5ff] transition active:scale-95 flex items-center justify-center gap-1.5">
-                    <Printer className="w-4 h-4" /> Print
+                    <Printer className="w-4 h-4" /> {t('tripPlan.print')}
                   </button>
                   <button onClick={handleDownload}
                     className="px-3 py-3 rounded-xl border-2 border-[#e7e7e7] text-[#1a1a1a] text-[12px] font-black hover:border-[#0071c2] hover:bg-[#f0f5ff] transition active:scale-95 flex items-center justify-center gap-1.5">
-                    <Download className="w-4 h-4" /> PDF
+                    <Download className="w-4 h-4" /> {t('tripPlan.pdf')}
                   </button>
                 </div>
 
                 <button onClick={runGenerate} disabled={loading}
                   className="w-full py-2.5 rounded-xl bg-[#f0f5ff] hover:bg-[#dceaff] text-[#0071c2] text-[12px] font-black transition active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-50">
-                  <Sparkles className="w-3.5 h-3.5" /> {loading ? 'Regenerating…' : 'Regenerate with AI'}
+                  <Sparkles className="w-3.5 h-3.5" /> {loading ? t('tripPlan.regenerating') : t('tripPlan.regenerate')}
                 </button>
               </div>
 
               <div className="bg-[#f8f9fa] border-t border-[#e7e7e7] px-5 py-3 flex items-start gap-2">
                 <Heart className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
                 <span className="text-[11px] font-semibold text-[#595959] leading-snug">
-                  MAFTRAVEL is free — we just help you plan. Book flights and hotels yourself when you're ready to go.
+                  {t('tripPlan.footerNote')}
                 </span>
               </div>
             </div>

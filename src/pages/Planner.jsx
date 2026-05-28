@@ -19,6 +19,7 @@ import { getDestinationHero, getVisaInfo } from '../services/destinationLookup';
 import { generatePackingList } from '../services/packingList';
 import { getEmergencyContacts } from '../services/emergencyContacts';
 import { getLocalApps } from '../services/localApps';
+import { getCurrencyInfo, formatLocal } from '../services/currencyByCountry';
 import { toast } from '../components/Toast';
 import useSEO from '../hooks/useSEO';
 
@@ -39,14 +40,14 @@ const getDestImg = (name = '') => {
 };
 
 const TRANSPORT_MODES = [
-  { id: 'walking', icon: Footprints, label: 'Walking',        desc: 'Explore on foot'           },
-  { id: 'car',     icon: Car,        label: 'Car / Drive',    desc: 'Rental car or taxi'         },
-  { id: 'public',  icon: Train,      label: 'Public Transit', desc: 'Metro, bus, tram'           },
+  { id: 'walking', icon: Footprints, labelKey: 'walkingLabel', descKey: 'walkingDesc' },
+  { id: 'car',     icon: Car,        labelKey: 'carLabel',     descKey: 'carDesc'     },
+  { id: 'public',  icon: Train,      labelKey: 'publicLabel',  descKey: 'publicDesc'  },
 ];
 
 /* ─── PDF Download ─── */
 function downloadPDF(destination, days, meta, itineraries, t, extras = {}) {
-  const { emergency, packing, localApps } = extras;
+  const { emergency, packing, localApps, currency } = extras;
   const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const html = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
@@ -170,6 +171,7 @@ ${cat.items.map(it => `<div class="event" style="padding:4px 0;"><span style="co
 ${localApps ? `
 <div class="section">
 <div class="section-title">📱 Useful Apps · ${esc(localApps.country)}</div>
+${currency ? `<p style="font-size:12px;color:#595959;margin:-2px 0 10px;">💰 Local currency: ${esc(currency.name)} (${esc(currency.code)} ${esc(currency.symbol)}) · 1 USD ≈ ${esc(String(currency.perUsd))} ${esc(currency.code)}</p>` : ''}
 ${[
   ['🚕 Taxi & transfer',    localApps.taxi],
   ['🗺️ Maps & navigation',  localApps.maps],
@@ -289,7 +291,7 @@ export default function Planner() {
     if (saved) return;
     savePlan({ formData: { ...formData, transportMode: transport }, itineraries, meta });
     setSaved(true);
-    toast.success('Plan saved', 'Find it any time in "My Trip Plans".');
+    toast.success(t('plannerPage.results.savedToast'), t('plannerPage.results.savedToastBody'));
   };
 
   const meta       = itineraryMeta;
@@ -298,17 +300,18 @@ export default function Planner() {
   const packing    = useMemo(() => hasResults ? generatePackingList(formData) : null, [hasResults, formData]);
   const emergency  = useMemo(() => hasResults ? getEmergencyContacts(formData.destination) : null, [hasResults, formData.destination]);
   const localApps  = useMemo(() => hasResults ? getLocalApps(formData.destination) : null, [hasResults, formData.destination]);
+  const currency   = useMemo(() => hasResults ? getCurrencyInfo(formData.destination) : null, [hasResults, formData.destination]);
   const planTotal  = meta?.budgetBreakdown?.total || 0;
   const userBudget = Number(formData.budget) || 0;
   const budgetDiff = userBudget - planTotal;
 
   const budgetRows = meta ? [
-    { label: 'Flights',       amount: meta.budgetBreakdown.flight,        icon: Plane,           color: 'bg-blue-400'    },
-    { label: `Hotel (${meta.budgetBreakdown.nights || '—'} nights)`, amount: meta.budgetBreakdown.accommodation, icon: Hotel, color: 'bg-indigo-400' },
-    { label: 'Food (Halal 🥩)',amount: meta.budgetBreakdown.food,          icon: UtensilsCrossed, color: 'bg-orange-400'  },
-    { label: 'Transport',     amount: meta.budgetBreakdown.transport,     icon: Car,             color: 'bg-green-400'   },
-    { label: 'Activities',    amount: meta.budgetBreakdown.activities,    icon: Activity,        color: 'bg-purple-400'  },
-    { label: 'Shopping',      amount: meta.budgetBreakdown.shopping,      icon: ShoppingBag,     color: 'bg-pink-400'    },
+    { label: t('plannerPage.budgetRows.flights'),       amount: meta.budgetBreakdown.flight,        icon: Plane,           color: 'bg-blue-400'    },
+    { label: `${t('planner.results.accommodation')} (${meta.budgetBreakdown.nights || '—'} ${t('plannerPage.budgetRows.hotelNights')})`, amount: meta.budgetBreakdown.accommodation, icon: Hotel, color: 'bg-indigo-400' },
+    { label: t('plannerPage.budgetRows.food'),          amount: meta.budgetBreakdown.food,          icon: UtensilsCrossed, color: 'bg-orange-400'  },
+    { label: t('plannerPage.budgetRows.transport'),     amount: meta.budgetBreakdown.transport,     icon: Car,             color: 'bg-green-400'   },
+    { label: t('plannerPage.budgetRows.activities'),    amount: meta.budgetBreakdown.activities,    icon: Activity,        color: 'bg-purple-400'  },
+    { label: t('plannerPage.budgetRows.shopping'),      amount: meta.budgetBreakdown.shopping,      icon: ShoppingBag,     color: 'bg-pink-400'    },
   ] : [];
 
   const navApps = meta?.navApps || NAV_APPS[transport] || NAV_APPS.walking;
@@ -333,16 +336,16 @@ export default function Planner() {
 
           {/* Transport mode selector */}
           <div className="mb-6">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-white/40 mb-3">How will you get around?</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-white/40 mb-3">{t('plannerPage.transport.prompt')}</p>
             <div className="flex flex-wrap gap-2">
               {TRANSPORT_MODES.map(m => (
                 <button key={m.id} onClick={() => setTransport(m.id)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[13px] font-semibold transition-premium ${
                     transport === m.id
-                      ? 'bg-white text-[#003580] border-white'
-                      : 'border-white/20 text-white/60 hover:border-white/40 hover:text-white'
+                      ? 'bg-white text-[#003580] border-white shadow-float -translate-y-0.5'
+                      : 'border-white/20 text-white/60 hover:border-white/40 hover:text-white hover:bg-white/5'
                   }`}>
-                  <m.icon className="w-4 h-4" /> {m.label}
+                  <m.icon className="w-4 h-4" /> {t(`plannerPage.transport.${m.labelKey}`)}
                 </button>
               ))}
             </div>
@@ -350,7 +353,7 @@ export default function Planner() {
 
           {/* Quick fill */}
           <div className="mb-5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-2">Популярные направления</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-2">{t('plannerPage.quickFill.title')}</p>
             <div className="flex flex-wrap gap-2">
               {[
                 { label: '🇩🇪 Berlin 10d',    d: { destination: 'Berlin',   startDate: '2026-05-01', days: 10, budget: 2900, budgetStyle: 'economy' } },
@@ -363,7 +366,7 @@ export default function Planner() {
                 { label: '🇬🇪 Tbilisi 5d',    d: { destination: 'Tbilisi',  startDate: '2026-05-20', days: 5,  budget: 800,  budgetStyle: 'budget'  } },
               ].map(s => (
                 <button key={s.label} onClick={() => setFormData(s.d)}
-                  className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white/70 text-[12px] hover:bg-white/25 hover:border-white/40 transition-premium">
+                  className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white/70 text-[12px] hover:bg-white/25 hover:border-white/40 hover:-translate-y-0.5 transition-premium">
                   {s.label}
                 </button>
               ))}
@@ -382,9 +385,9 @@ export default function Planner() {
         <div ref={resultsRef} className="max-w-7xl mx-auto px-4 md:px-8 py-8 page-fade">
 
           {/* Destination hero */}
-          <div className="relative h-52 md:h-72 rounded-2xl overflow-hidden mb-6">
+          <div className="relative h-52 md:h-72 rounded-2xl overflow-hidden mb-6 shadow-lift">
             <img src={getDestImg(formData.destination)} alt={formData.destination} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
             <div className="absolute bottom-5 left-6 right-6 flex items-end justify-between gap-4 flex-wrap">
               <div>
                 <h2 className="text-3xl font-black text-white flex items-center gap-2">
@@ -395,25 +398,25 @@ export default function Planner() {
                     <Navigation className="w-3.5 h-3.5" /> {formData.fromCity} → {formData.destination}
                   </p>
                 )}
-                <p className="text-white/60 text-sm mt-1">{itineraries.length} days · ${meta.budgetBreakdown.total.toLocaleString()} budget</p>
+                <p className="text-white/60 text-sm mt-1">{itineraries.length} {t('plannerPage.results.daysWord')} · ${meta.budgetBreakdown.total.toLocaleString()} {t('plannerPage.results.budgetWord')}</p>
               </div>
               {/* Save + PDF Download */}
               <div className="no-print flex items-center gap-2">
                 <button
                   onClick={handleSavePlan}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-premium shadow-lg ${
+                  className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-bold ${
                     saved
-                      ? 'bg-green-500 text-white cursor-default'
-                      : 'bg-[#f5b942] text-[#002250] hover:bg-[#e0a435]'
+                      ? 'rounded-xl bg-green-500 text-white cursor-default shadow-float transition-premium'
+                      : 'btn-gold'
                   }`}>
                   {saved
-                    ? <><Check className="w-4 h-4" /> Saved</>
-                    : <><Save className="w-4 h-4" /> Save plan</>}
+                    ? <><Check className="w-4 h-4" /> {t('plannerPage.results.saved')}</>
+                    : <><Save className="w-4 h-4" /> {t('plannerPage.results.savePlan')}</>}
                 </button>
                 <button
-                  onClick={() => downloadPDF(formData.destination, formData.days, meta, itineraries, t, { emergency, packing, localApps })}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#003580] text-[13px] font-bold hover:bg-white/90 transition-premium shadow-lg">
-                  <Download className="w-4 h-4" /> Download PDF
+                  onClick={() => downloadPDF(formData.destination, formData.days, meta, itineraries, t, { emergency, packing, localApps, currency })}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#003580] text-[13px] font-bold hover:bg-white/90 transition-premium shadow-float">
+                  <Download className="w-4 h-4" /> {t('plannerPage.results.downloadPDF')}
                 </button>
               </div>
             </div>
@@ -427,11 +430,11 @@ export default function Planner() {
                 <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[14px] font-black text-amber-800 mb-1">
-                    ⚠️ Для въезда в {vi.country} необходима Виза!
+                    ⚠️ {t('plannerPage.results.visaTitle')} {vi.country}
                   </p>
                   <p className="text-[12px] text-amber-700 leading-snug">{vi.text}</p>
                   <p className="text-[11px] text-amber-600 mt-1 font-medium">
-                    📌 Позаботьтесь об оформлении визы до вылета через посольство страны назначения.
+                    📌 {t('plannerPage.results.visaNote')}
                   </p>
                 </div>
               </div>
@@ -449,12 +452,12 @@ export default function Planner() {
               <div>
                 <p className={`text-[14px] font-black mb-0.5 ${budgetDiff >= 0 ? 'text-green-800' : 'text-amber-800'}`}>
                   {budgetDiff >= 0
-                    ? `✅ План укладывается в бюджет — остаётся $${budgetDiff.toLocaleString()}`
-                    : `⚠️ План превышает бюджет на $${Math.abs(budgetDiff).toLocaleString()}`}
+                    ? `✅ ${t('plannerPage.results.budgetFitOk')} $${budgetDiff.toLocaleString()}`
+                    : `⚠️ ${t('plannerPage.results.budgetFitOver')} $${Math.abs(budgetDiff).toLocaleString()}`}
                 </p>
                 <p className={`text-[12px] ${budgetDiff >= 0 ? 'text-green-700' : 'text-amber-700'}`}>
-                  Ваш бюджет ${userBudget.toLocaleString()} · стоимость плана ${planTotal.toLocaleString()}
-                  {budgetDiff < 0 && ' — попробуйте сократить число дней или выбрать эконом-стиль.'}
+                  {t('plannerPage.results.budgetYours')} ${userBudget.toLocaleString()} · {t('plannerPage.results.budgetPlanCost')} ${planTotal.toLocaleString()}
+                  {budgetDiff < 0 && ` — ${t('plannerPage.results.budgetOverHint')}`}
                 </p>
               </div>
             </div>
@@ -462,15 +465,15 @@ export default function Planner() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
             {/* Budget card */}
-            <div className="lg:col-span-2 bg-white border border-[#e7e7e7] rounded-2xl p-6">
+            <div className="lg:col-span-2 bg-white border border-[#e7e7e7] rounded-2xl p-6 shadow-soft">
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-widest text-[#9ca3af] mb-1">{t('planner.results.budgetBreakdown')}</p>
-                  <p className="text-3xl font-black text-[#003580]">${meta.budgetBreakdown.total.toLocaleString()}</p>
+                  <p className="text-3xl font-black text-gradient">${meta.budgetBreakdown.total.toLocaleString()}</p>
                   <p className="text-[#9ca3af] text-sm">{t('planner.results.totalCost')}</p>
                 </div>
                 <div className="bg-[#f8f9fa] rounded-xl p-3 text-center border border-[#e7e7e7]">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#9ca3af]">Stay</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#9ca3af]">{t('plannerPage.results.stay')}</p>
                   <p className="text-[13px] font-bold text-[#1a1a1a]">{meta.budgetBreakdown.hotelName}</p>
                 </div>
               </div>
@@ -494,7 +497,7 @@ export default function Planner() {
                   <div className="mt-4">
                     <button onClick={() => setShowNavApps(v => !v)}
                       className="flex items-center justify-between w-full text-[12px] font-bold text-[#0071c2] hover:text-[#003580] transition-premium">
-                      <span className="flex items-center gap-1.5"><Navigation className="w-3.5 h-3.5" /> Recommended Apps</span>
+                      <span className="flex items-center gap-1.5"><Navigation className="w-3.5 h-3.5" /> {t('plannerPage.results.recommendedApps')}</span>
                       {showNavApps ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     </button>
                     {showNavApps && (
@@ -519,7 +522,7 @@ export default function Planner() {
                 <div className="bg-green-50 border border-green-100 rounded-2xl p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-lg">🕌</span>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-green-700">Halal Food Guide</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-green-700">{t('plannerPage.results.halalGuide')}</p>
                   </div>
                   <p className="text-[13px] text-green-800 leading-relaxed">{meta.halalFoodGuide}</p>
                 </div>
@@ -548,17 +551,35 @@ export default function Planner() {
             <div className="bg-white border border-[#e7e7e7] rounded-2xl p-6 mb-6">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <Smartphone className="w-5 h-5 text-[#0071c2]" />
-                <h3 className="text-[16px] font-black text-[#1a1a1a]">Приложения для поездки</h3>
+                <h3 className="text-[16px] font-black text-[#1a1a1a]">{t('plannerPage.apps.title')}</h3>
                 <span className="text-[13px] font-bold text-[#595959]">· {localApps.country}</span>
               </div>
               <p className="text-[12px] text-[#9ca3af] mb-4">
-                Сервисы, которые реально работают в этом городе — установите их перед вылетом.
+                {t('plannerPage.apps.sub')}
               </p>
+
+              {/* Local currency */}
+              {currency && (
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 mb-4 p-3.5 rounded-xl bg-[#f0f5ff] border border-[#0071c2]/15">
+                  <span className="text-[13px] font-black text-[#003580]">
+                    💰 {t('plannerPage.apps.localCurrency')}: {currency.name} · {currency.code} {currency.symbol}
+                  </span>
+                  <span className="text-[12px] font-bold text-[#595959]">
+                    1 USD ≈ {formatLocal(currency.perUsd)} {currency.code}
+                  </span>
+                  {userBudget > 0 && (
+                    <span className="text-[12px] font-bold text-[#595959]">
+                      {t('plannerPage.apps.yourBudget')} ${userBudget.toLocaleString()} ≈ {formatLocal(userBudget * currency.perUsd)} {currency.code}
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                  { key: 'taxi',       label: 'Такси и трансфер',   emoji: '🚕', list: localApps.taxi },
-                  { key: 'maps',       label: 'Карты и навигация',  emoji: '🗺️', list: localApps.maps },
-                  { key: 'translator', label: 'Переводчики',        emoji: '🌐', list: localApps.translator },
+                  { key: 'taxi',       label: t('plannerPage.apps.taxi'),       emoji: '🚕', list: localApps.taxi },
+                  { key: 'maps',       label: t('plannerPage.apps.maps'),       emoji: '🗺️', list: localApps.maps },
+                  { key: 'translator', label: t('plannerPage.apps.translator'), emoji: '🌐', list: localApps.translator },
                 ].map(group => (
                   <div key={group.key} className="bg-[#f8f9fa] border border-[#e7e7e7] rounded-xl p-4">
                     <p className="text-[13px] font-black text-[#1a1a1a] mb-3">{group.emoji} {group.label}</p>
@@ -599,10 +620,10 @@ export default function Planner() {
             <div className="bg-white border border-[#e7e7e7] rounded-2xl p-6 mb-6">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <Briefcase className="w-5 h-5 text-[#0071c2]" />
-                <h3 className="text-[16px] font-black text-[#1a1a1a]">Чек-лист сборов</h3>
+                <h3 className="text-[16px] font-black text-[#1a1a1a]">{t('plannerPage.packing.title')}</h3>
                 <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#0071c2]">{packing.seasonLabel}</span>
               </div>
-              <p className="text-[12px] text-[#9ca3af] mb-4">Отмечайте пункты по мере сборов — список подобран под сезон и длительность поездки.</p>
+              <p className="text-[12px] text-[#9ca3af] mb-4">{t('plannerPage.packing.sub')}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {packing.categories.map(cat => (
                   <div key={cat.title} className="bg-[#f8f9fa] border border-[#e7e7e7] rounded-xl p-4">
@@ -635,11 +656,11 @@ export default function Planner() {
             <div className="bg-white border border-[#e7e7e7] rounded-2xl p-6 mb-6">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <Phone className="w-5 h-5 text-red-500" />
-                <h3 className="text-[16px] font-black text-[#1a1a1a]">Экстренные контакты</h3>
+                <h3 className="text-[16px] font-black text-[#1a1a1a]">{t('plannerPage.emergency.title')}</h3>
                 <span className="text-[15px]">{emergency.flag}</span>
                 <span className="text-[13px] font-bold text-[#595959]">{emergency.country}</span>
               </div>
-              <p className="text-[12px] text-[#9ca3af] mb-4">Сохраните эти номера до вылета — нажмите, чтобы позвонить.</p>
+              <p className="text-[12px] text-[#9ca3af] mb-4">{t('plannerPage.emergency.sub')}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {emergency.numbers.map((n, i) => (
                   <a key={i} href={`tel:${String(n.number).replace(/\s/g, '')}`}
@@ -667,7 +688,7 @@ export default function Planner() {
           <div className="bg-white border border-[#e7e7e7] rounded-2xl overflow-hidden mb-6">
             <div className="px-6 py-4 border-b border-[#f0f0f0] flex items-center gap-2">
               <Wallet className="w-4 h-4 text-[#0071c2]" />
-              <p className="text-[13px] font-bold text-[#1a1a1a]">Estimated Budget Summary</p>
+              <p className="text-[13px] font-bold text-[#1a1a1a]">{t('plannerPage.results.estimatedSummary')}</p>
             </div>
             <div className="divide-y divide-[#f0f0f0]">
               {budgetRows.map(({ label, amount, icon: Icon, color }) => (
@@ -683,7 +704,7 @@ export default function Planner() {
               ))}
             </div>
             <div className="flex items-center justify-between px-6 py-4 bg-[#003580]">
-              <span className="text-[14px] font-black text-white uppercase tracking-wider">Total Budget</span>
+              <span className="text-[14px] font-black text-white uppercase tracking-wider">{t('plannerPage.results.totalBudget')}</span>
               <span className="text-xl font-black text-white">${meta.budgetBreakdown.total.toLocaleString()}</span>
             </div>
           </div>

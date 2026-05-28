@@ -9,21 +9,25 @@ export default function Footer() {
   const [joined, setJoined] = useState(false);
 
   const nav = [
-    { label: t('nav.home'),    to: '/'        },
-    { label: t('nav.planner'), to: '/planner' },
-    { label: t('nav.flights'), to: '/flights' },
+    { label: t('nav.home'),         to: '/'            },
+    { label: t('nav.planner'),      to: '/planner'     },
+    { label: t('nav2.whereToGoFooter'), to: '/where-to-go' },
+    { label: t('nav.flights'),      to: '/flights'     },
+    { label: t('nav2.tools'),       to: '/tools'       },
   ];
 
   const support = [
     { label: t('footer.supportLinks.support'), to: '#'        },
     { label: t('footer.supportLinks.contact'), to: '#'        },
-    { label: 'Terms of Use',                   to: '/terms'   },
-    { label: 'Privacy Policy',                 to: '/privacy' },
-    { label: 'Cookie Policy',                  to: '/cookies' },
+    { label: t('nav2.termsOfUse'),             to: '/terms'   },
+    { label: t('nav2.privacyPolicy'),          to: '/privacy' },
+    { label: t('nav2.cookiePolicy'),           to: '/cookies' },
   ];
 
   return (
-    <footer className="w-full bg-[#003580] text-white mt-12">
+    <footer className="relative w-full bg-gradient-to-b from-[#003580] to-[#002250] text-white mt-12">
+      {/* Gold hairline to echo the navbar accent */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f5b942]/45 to-transparent" />
       <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-10 border-b border-white/[0.12]">
           {/* Brand */}

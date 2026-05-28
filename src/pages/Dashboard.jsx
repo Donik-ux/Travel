@@ -40,8 +40,8 @@ export default function Dashboard() {
     { label: t('dashboard.planTrip'),      to: '/planner',       icon: Globe,     color: 'text-purple-500' },
     { label: t('dashboard.berlinTrip'),    to: '/berlin-trip',   icon: Map,       color: 'text-blue-500'   },
     { label: t('dashboard.exoticTours'),   to: '/exotic-tours',  icon: Sparkles,  color: 'text-orange-500' },
-    { label: t('nav.myBookings'),          to: '/my-bookings',   icon: Clock,     color: 'text-green-500'  },
-    { label: 'Wishlist',                   to: '/wishlist',      icon: Heart,     color: 'text-red-500'    },
+    { label: t('dashboard.myBookings'),    to: '/my-bookings',   icon: Clock,     color: 'text-green-500'  },
+    { label: t('dashboard.wishlist'),      to: '/wishlist',      icon: Heart,     color: 'text-red-500'    },
   ];
 
   const statCards = [
@@ -54,11 +54,15 @@ export default function Dashboard() {
   return (
     <div className="bg-[#f8f9fa] min-h-screen">
       {/* Header */}
-      <div className="bg-[#003580] text-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 pt-10 pb-20">
+      <div className="relative bg-gradient-to-br from-[#003580] via-[#00306f] to-[#002250] text-white overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="animate-float absolute -top-16 right-[8%] w-72 h-72 rounded-full bg-[#0071c2]/30 blur-3xl" />
+          <div className="animate-float absolute -bottom-24 left-[20%] w-80 h-80 rounded-full bg-[#febb02]/10 blur-3xl" style={{ animationDelay: '1.5s' }} />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 md:px-8 pt-10 pb-20">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-2xl font-black border border-white/20 shadow-2xl">
+              <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-2xl font-black border border-white/20 shadow-2xl text-[#febb02]">
                 {user.avatar || user.name?.[0]}
               </div>
               <div>
@@ -69,7 +73,7 @@ export default function Dashboard() {
               </div>
             </div>
             <button onClick={() => navigate('/planner')}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-[#003580] font-black text-[13px] hover:bg-white/90 transition-premium shadow-xl shadow-black/10">
+              className="btn-gold flex items-center gap-2 px-6 py-3 text-[13px]">
               <Sparkles className="w-4 h-4" />
               {t('dashboard.planNew')} <ArrowUpRight className="w-4 h-4" />
             </button>
@@ -81,7 +85,7 @@ export default function Dashboard() {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {statCards.map((s, i) => (
-            <div key={i} className="bg-white border border-[#eef2f6] rounded-2xl p-5 shadow-sm hover:translate-y-[-2px] transition-all page-fade" style={{animationDelay: `${i*100}ms`}}>
+            <div key={i} className="lift bg-white border border-[#eef2f6] rounded-2xl p-5 shadow-soft page-fade" style={{animationDelay: `${i*100}ms`}}>
               <div className={`w-10 h-10 rounded-xl ${s.bg} ${s.color} flex items-center justify-center mb-4`}>
                 <s.icon className="w-5 h-5" />
               </div>
@@ -94,16 +98,16 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Recent Bookings */}
           <div className="lg:col-span-8 flex flex-col gap-6">
-            <div className="bg-white border border-[#eef2f6] rounded-3xl p-6 shadow-sm overflow-hidden">
+            <div className="bg-white border border-[#eef2f6] rounded-3xl p-6 shadow-soft overflow-hidden">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-lg font-black text-[#1a1a1a]">{t('dashboard.recentBookings')}</h2>
                   <p className="text-[11px] text-[#9ca3af] font-bold uppercase tracking-widest">
-                    {t('nav.myBookings')}
+                    {t('dashboard.recentBookingsSub')}
                   </p>
                 </div>
                 <button onClick={() => navigate('/my-bookings')} className="text-sm font-bold text-[#0071c2] hover:underline flex items-center gap-1">
-                  {t('bookings.view')} <ChevronRight className="w-4 h-4" />
+                  {t('dashboard.viewBookings')} <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
@@ -116,7 +120,7 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-4">
                   {bookings.slice(0, 5).map((b, i) => (
-                    <div key={b.id} className="group flex items-center gap-4 p-4 rounded-2xl bg-[#f8f9fa] border border-[#eef2f6] hover:bg-white hover:border-[#0071c2]/20 transition-all cursor-pointer"
+                    <div key={b.id} className="group flex items-center gap-4 p-4 rounded-2xl bg-[#f8f9fa] border border-[#eef2f6] hover:bg-white hover:border-[#0071c2]/20 hover:shadow-soft transition-all cursor-pointer"
                       onClick={() => navigate('/my-bookings')}>
                       <div className="w-12 h-12 rounded-xl bg-white border border-[#eef2f6] flex items-center justify-center shrink-0">
                         {b.type === 'flight' ? <Plane className="w-6 h-6 text-[#0071c2]" /> :
@@ -138,7 +142,9 @@ export default function Dashboard() {
                           b.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                           'bg-red-100 text-red-700'
                         }`}>
-                          {t(`bookings.status.${b.status}`) || b.status}
+                          {b.status === 'confirmed' ? t('dashboard.statusConfirmed') :
+                           b.status === 'pending' ? t('dashboard.statusPending') :
+                           b.status === 'cancelled' ? t('dashboard.statusCancelled') : b.status}
                         </span>
                       </div>
                     </div>
@@ -148,18 +154,19 @@ export default function Dashboard() {
             </div>
 
             {/* Travel Insight */}
-            <div className="bg-[#003580] rounded-3xl p-8 text-white relative overflow-hidden group shadow-2xl">
+            <div className="bg-gradient-to-br from-[#003580] via-[#00306f] to-[#002250] rounded-3xl p-8 text-white relative overflow-hidden group shadow-lift">
+              <div className="pointer-events-none absolute -top-10 right-10 w-56 h-56 rounded-full bg-[#febb02]/15 blur-3xl animate-float" />
               <div className="relative z-10 max-w-sm">
                 <h3 className="text-2xl font-black leading-tight mb-4 tracking-tighter">
-                  {t('dashboard.planNew')} 💡
+                  {t('dashboard.insightProTitle')}
                 </h3>
                 <p className="text-white/60 text-sm leading-relaxed mb-6 font-medium">
                   {stats.confirmed > 2
-                    ? "You're becoming a pro traveler! You visited more places than 85% of other members this year."
-                    : "Ready for the next adventure? Our AI can help you plan your next trip based on your favorite styles."}
+                    ? t('dashboard.insightProText')
+                    : t('dashboard.insightNewText')}
                 </p>
                 <button onClick={() => navigate('/planner')}
-                  className="px-6 py-3 rounded-xl bg-white text-[#003580] font-black text-[13px] uppercase tracking-widest flex items-center gap-2 hover:scale-105 active:scale-95 transition-all">
+                  className="btn-gold px-6 py-3 text-[13px] uppercase tracking-widest flex items-center gap-2">
                   {t('dashboard.planNew')} <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -171,7 +178,7 @@ export default function Dashboard() {
 
           {/* Sidebar */}
           <div className="lg:col-span-4 flex flex-col gap-6">
-            <div className="bg-white border border-[#eef2f6] rounded-3xl p-6 shadow-sm">
+            <div className="bg-white border border-[#eef2f6] rounded-3xl p-6 shadow-soft">
               <h3 className="text-sm font-black text-[#1a1a1a] mb-5 uppercase tracking-widest">
                 {t('dashboard.quickActions')}
               </h3>
@@ -190,20 +197,21 @@ export default function Dashboard() {
             </div>
 
             {/* Rewards */}
-            <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-3xl p-6 text-white shadow-xl">
-              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-4">
+            <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 to-indigo-700 rounded-3xl p-6 text-white shadow-lift">
+              <div className="pointer-events-none absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/10 blur-2xl animate-float" />
+              <div className="relative w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-4">
                 <Sparkles className="w-6 h-6 text-purple-200" />
               </div>
-              <h3 className="text-lg font-black mb-2">Travel Rewards</h3>
-              <p className="text-white/70 text-xs leading-relaxed mb-6">
-                Earn points on every booking and unlock exclusive member-only discounts.
+              <h3 className="relative text-lg font-black mb-2">{t('dashboard.rewardsTitle')}</h3>
+              <p className="relative text-white/70 text-xs leading-relaxed mb-6">
+                {t('dashboard.rewardsText')}
               </p>
-              <div className="h-1.5 w-full bg-white/10 rounded-full mb-2">
+              <div className="relative h-1.5 w-full bg-white/10 rounded-full mb-2">
                 <div className="h-full w-[45%] bg-white rounded-full"></div>
               </div>
-              <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-white/50">
-                <span>Silver Member</span>
-                <span>450 / 1000 pts</span>
+              <div className="relative flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-white/50">
+                <span>{t('dashboard.rewardsTier')}</span>
+                <span>{t('dashboard.rewardsProgress')}</span>
               </div>
             </div>
           </div>

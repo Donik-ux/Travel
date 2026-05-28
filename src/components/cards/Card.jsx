@@ -7,16 +7,17 @@ const Card = ({ children, className, hover = true, padding = 'md', glow = false,
   return (
     <div
       className={cn(
-        'relative bg-[#111111] border border-white/[0.07] rounded-2xl',
-        'shadow-[0_4px_24px_rgba(0,0,0,0.4)]',
-        hover && 'card-hover cursor-default',
+        'relative bg-gradient-to-b from-[#141414] to-[#0f0f0f] border border-white/[0.08] rounded-2xl',
+        'shadow-[0_4px_24px_rgba(0,0,0,0.4)] ring-1 ring-inset ring-white/[0.02]',
+        hover && 'card-hover hover:border-white/[0.14] cursor-default',
         glow && 'card-glow',
         paddings[padding],
         className
-        
       )}
       {...props}
     >
+      {/* subtle top hairline sheen */}
+      <span className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.10] to-transparent" />
       {children}
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { create } from 'zustand';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, AlertCircle, Info, X, Sparkles } from 'lucide-react';
+import { useTranslation } from '../store/useLangStore';
 
 let uid = 0;
 
@@ -30,6 +31,7 @@ const STYLE = {
 };
 
 const ToastItem = ({ t, onClose }) => {
+  const { t: tr } = useTranslation();
   const S = STYLE[t.type] || STYLE.info;
   const Icon = S.icon;
   useEffect(() => {
@@ -54,7 +56,7 @@ const ToastItem = ({ t, onClose }) => {
           <p className="text-[13.5px] font-black text-[#1a1a1a] leading-tight">{t.title}</p>
           {t.description && <p className="text-[12px] font-semibold text-[#595959] mt-0.5 leading-snug">{t.description}</p>}
         </div>
-        <button onClick={onClose} className="p-1 -mr-1 rounded-md hover:bg-black/5 text-[#9ca3af] shrink-0" aria-label="Dismiss">
+        <button onClick={onClose} className="p-1 -mr-1 rounded-md hover:bg-black/5 text-[#9ca3af] shrink-0" aria-label={tr('ui.toast.dismiss')}>
           <X className="w-3.5 h-3.5" />
         </button>
       </div>

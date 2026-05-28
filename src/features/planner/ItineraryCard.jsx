@@ -22,24 +22,26 @@ const ItineraryCard = ({ dayPlan, index, transportMode = 'walking', navApps = []
 
   return (
     <div
-      className="bg-white border border-[#e7e7e7] rounded-2xl overflow-hidden card-hover page-fade"
+      className="bg-white border border-[#e7e7e7] rounded-2xl overflow-hidden shadow-soft lift page-fade"
       style={{ animationDelay: `${index * 0.07}s` }}
     >
       {/* Header */}
-      <div className="bg-[#003580] px-5 py-4">
-        <div className="flex items-center justify-between">
+      <div className="relative bg-gradient-to-br from-[#003580] to-[#002250] px-5 py-4 overflow-hidden">
+        <div className="absolute inset-0 opacity-25 pointer-events-none"
+             style={{ backgroundImage: 'radial-gradient(circle at 90% 10%, #0071c2 0%, transparent 55%)' }} />
+        <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-white/15 ring-1 ring-white/20 flex items-center justify-center shrink-0">
               <span className="text-[15px] font-black text-white">{dayPlan.day}</span>
             </div>
             <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-white/40">{t('planner.results.day')} {dayPlan.day}</p>
-              {dayPlan.date && <p className="text-[12px] font-semibold text-white/70">{dayPlan.date}</p>}
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/50">{t('planner.results.day')} {dayPlan.day}</p>
+              {dayPlan.date && <p className="text-[12px] font-semibold text-white/75">{dayPlan.date}</p>}
             </div>
           </div>
           <div className="text-right">
             <p className="text-[22px] font-black text-white leading-none">${dayPlan.cost}</p>
-            <p className="text-[9px] text-white/40 uppercase tracking-wider">{t('planner.results.est')} spend</p>
+            <p className="text-[9px] text-white/45 uppercase tracking-wider">{t('planner.results.est')} {t('plannerPage.card.estSpend')}</p>
           </div>
         </div>
       </div>
@@ -62,11 +64,11 @@ const ItineraryCard = ({ dayPlan, index, transportMode = 'walking', navApps = []
             : null;
 
           return (
-            <div key={i} className="px-5 py-3.5">
+            <div key={i} className="px-5 py-3.5 hover:bg-[#f8f9fa] transition-premium">
               <div className="flex items-start gap-3">
                 {/* Time badge */}
                 <div className="shrink-0 mt-0.5">
-                  <span className="text-[10px] font-black text-[#0071c2] bg-blue-50 px-1.5 py-0.5 rounded whitespace-nowrap">
+                  <span className="text-[10px] font-black text-[#0071c2] bg-blue-50 ring-1 ring-[#0071c2]/10 px-2 py-1 rounded-md whitespace-nowrap">
                     {ev.time || '—'}
                   </span>
                 </div>
@@ -107,7 +109,7 @@ const ItineraryCard = ({ dayPlan, index, transportMode = 'walking', navApps = []
                         className="flex items-center gap-1 text-[10px] text-[#0071c2] font-bold hover:text-[#003580] transition-colors"
                       >
                         <Navigation className="w-3 h-3" />
-                        {transportMode === 'car' ? 'Navigate' : 'Directions'}
+                        {transportMode === 'car' ? t('plannerPage.card.navigate') : t('plannerPage.card.directions')}
                       </a>
                     )}
                   </div>
@@ -144,7 +146,7 @@ const ItineraryCard = ({ dayPlan, index, transportMode = 'walking', navApps = []
                 <p className="text-[11px] text-green-700 font-medium">{dayPlan.halalRestaurant.address}</p>
               </div>
               {dayPlan.halalRestaurant.avgPrice && (
-                <p className="text-[10px] text-green-600 mt-0.5 font-bold">Avg: {dayPlan.halalRestaurant.avgPrice}</p>
+                <p className="text-[10px] text-green-600 mt-0.5 font-bold">{t('plannerPage.card.avg')}: {dayPlan.halalRestaurant.avgPrice}</p>
               )}
             </div>
           </div>
@@ -154,7 +156,7 @@ const ItineraryCard = ({ dayPlan, index, transportMode = 'walking', navApps = []
       {/* Car nav apps strip */}
       {transportMode === 'car' && navApps.length > 0 && (
         <div className="border-t border-[#f0f0f0] px-4 py-3 bg-[#f8f9fa]">
-          <p className="text-[9px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">Navigation Apps</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">{t('plannerPage.card.navApps')}</p>
           <div className="flex flex-wrap gap-2">
             {navApps.slice(0, 3).map(app => (
               <span key={app.name} className="flex items-center gap-1 text-[10px] font-bold text-[#595959] bg-white border border-[#e7e7e7] px-2 py-1 rounded-lg">

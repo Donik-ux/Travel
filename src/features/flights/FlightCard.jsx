@@ -15,18 +15,17 @@ export default function FlightCard({ flight, index, aiPriced }) {
   return (
     <>
       <div
-        className="bg-white border border-[#e7e7e7] hover:border-[#0071c2] hover:shadow-lg rounded-2xl p-5 cursor-pointer transition-all"
+        className="group bg-white border border-[#e7e7e7] hover:border-[#0071c2] shadow-soft hover:shadow-lift lift rounded-2xl p-5 cursor-pointer transition-colors"
         style={{ animationDelay: `${(index || 0) * 0.05}s` }}
         onClick={() => setOpen(true)}
       >
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
-          {/* Airline — clickable when an official site is known */}
-          {officialUrl ? (
+пуш           {officialUrl ? (
             <a href={officialUrl} target="_blank" rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-3 lg:w-44 shrink-0 rounded-lg -m-1 p-1 hover:bg-[#f0f5ff] transition group/airline"
-              title={`Book directly on ${meta?.domain || flight.airline}`}>
-              <div className="w-12 h-12 rounded-xl bg-[#f0f5ff] border border-[#dceaff] flex items-center justify-center text-2xl shrink-0">
+              className="flex items-center gap-3 lg:w-44 shrink-0 rounded-xl -m-1 p-1 hover:bg-[#f0f5ff] transition group/airline"
+              title={`${t('flightsPage.card.bookDirectTitle')} ${meta?.domain || flight.airline}`}>
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#f0f5ff] to-[#dceaff] border border-[#dceaff] shadow-soft flex items-center justify-center text-2xl shrink-0 group-hover/airline:scale-105 transition-transform">
                 {meta?.flag || flight.airlineLogo || <Plane className="w-5 h-5 text-[#0071c2] -rotate-45" />}
               </div>
               <div className="min-w-0">
@@ -41,7 +40,7 @@ export default function FlightCard({ flight, index, aiPriced }) {
             </a>
           ) : (
             <div className="flex items-center gap-3 lg:w-44 shrink-0">
-              <div className="w-12 h-12 rounded-xl bg-[#f0f5ff] border border-[#dceaff] flex items-center justify-center text-2xl shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#f0f5ff] to-[#dceaff] border border-[#dceaff] shadow-soft flex items-center justify-center text-2xl shrink-0">
                 {flight.airlineLogo || <Plane className="w-5 h-5 text-[#0071c2] -rotate-45" />}
               </div>
               <div className="min-w-0">
@@ -51,7 +50,6 @@ export default function FlightCard({ flight, index, aiPriced }) {
             </div>
           )}
 
-          {/* Route */}
           <div className="flex-1 flex items-center gap-3 w-full">
             <div className="text-center shrink-0 min-w-[68px]">
               <p className="text-[22px] font-black text-[#1a1a1a] leading-none tabular-nums">{flight.departure}</p>
@@ -76,7 +74,7 @@ export default function FlightCard({ flight, index, aiPriced }) {
               <span className={`text-[10px] font-black ${flight.stops === 0 ? 'text-[#008009]' : 'text-[#a45e00]'}`}>
                 {flight.stops === 0
                   ? `✓ ${t('flights.results.direct') || 'Non-stop'}`
-                  : `${flight.stops} ${flight.stops === 1 ? 'stop' : 'stops'}`}
+                  : `${flight.stops} ${flight.stops === 1 ? t('flightsPage.card.stop') : t('flightsPage.card.stops')}`}
               </span>
             </div>
 
@@ -86,10 +84,9 @@ export default function FlightCard({ flight, index, aiPriced }) {
             </div>
           </div>
 
-          {/* Price + Button */}
           <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-3 w-full lg:w-auto lg:min-w-[160px]">
             <div className="text-right">
-              <p className="text-[26px] font-black text-[#003580] leading-none tabular-nums">${flight.price}</p>
+              <p className="text-[26px] font-black text-gradient leading-none tabular-nums">${flight.price}</p>
               <p className="text-[11px] text-[#9ca3af] font-semibold mt-0.5">
                 {aiPriced ? '🤖 AI-priced' : (t('flights.results.perPerson') || 'per person')}
               </p>
@@ -98,21 +95,21 @@ export default function FlightCard({ flight, index, aiPriced }) {
               {officialUrl && (
                 <a href={officialUrl} target="_blank" rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="px-3 py-2 rounded-lg bg-[#008009] hover:bg-[#006d07] text-white text-[11px] font-black transition active:scale-95 whitespace-nowrap shadow-sm flex items-center gap-1.5">
-                  <BadgeCheck className="w-3 h-3" /> Book on {meta?.domain.split('.')[0]}
+                  className="px-3.5 py-2 rounded-xl bg-[#008009] hover:bg-[#006d07] text-white text-[11px] font-black transition active:scale-95 whitespace-nowrap shadow-soft hover:shadow-float flex items-center gap-1.5">
+                  <BadgeCheck className="w-3 h-3" /> {t('flightsPage.card.bookOn')} {meta?.domain.split('.')[0]}
                 </a>
               )}
               <button
                 onClick={e => { e.stopPropagation(); setOpen(true); }}
-                className="px-3 py-2 rounded-lg bg-[#febb02] hover:bg-[#ffb700] text-[#1a1a1a] text-[11px] font-black transition active:scale-95 whitespace-nowrap shadow-sm">
-                Compare prices
+                className="btn-gold px-3.5 py-2 text-[11px] whitespace-nowrap">
+                {t('flightsPage.card.comparePrices')}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Bottom badges */}
-        <div className="mt-3 pt-3 border-t border-[#f0f0f0] flex items-center gap-2 flex-wrap">
+        <div className="hairline mt-3 mb-3" />
+        <div className="flex items-center gap-2 flex-wrap">
           {flight.stops === 0 && (
             <span className="px-2.5 py-1 bg-[#e8f5e9] text-[#008009] text-[10px] font-black rounded-full uppercase tracking-wider">
               {t('flights.results.nonstop') || 'Non-stop'}
@@ -121,19 +118,18 @@ export default function FlightCard({ flight, index, aiPriced }) {
           <span className="px-2.5 py-1 bg-[#f0f5ff] text-[#0071c2] text-[10px] font-black rounded-full uppercase tracking-wider">{flight.cabin}</span>
           {flight.eco && (
             <span className="px-2.5 py-1 bg-[#e8f5e9] text-[#008009] text-[10px] font-black rounded-full uppercase tracking-wider flex items-center gap-1">
-              <Leaf className="w-2.5 h-2.5" /> Lower CO₂
+              <Leaf className="w-2.5 h-2.5" /> {t('flightsPage.card.lowerCo2')}
             </span>
           )}
           {flight.seats != null && (
             <span className={`text-[11px] font-bold flex items-center gap-1 ${seatsTight ? 'text-red-500' : 'text-[#9ca3af]'}`}>
-              <Users className="w-3 h-3" />{flight.seats} {seatsTight ? 'left!' : (t('flights.results.seats') || 'seats')}
+              <Users className="w-3 h-3" />{flight.seats} {seatsTight ? t('flightsPage.card.left') : (t('flights.results.seats') || 'seats')}
             </span>
           )}
-          <span className="ml-auto text-[11px] text-[#0071c2] font-black">{t('flights.results.comparePrices') || 'Compare prices'} →</span>
+          <span className="ml-auto text-[11px] text-[#0071c2] font-black inline-flex items-center gap-1 group-hover:gap-2 transition-all">{t('flights.results.comparePrices') || 'Compare prices'} <span aria-hidden="true">→</span></span>
         </div>
       </div>
 
-      {/* Booking Modal */}
       {open && (
         <FlightBookingModal
           flight={flight}

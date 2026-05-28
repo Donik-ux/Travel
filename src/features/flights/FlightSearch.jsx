@@ -5,14 +5,14 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '../../store/useLangStore';
 
-const POPULAR_FROM = ['Bishkek (FRU)', 'Almaty (ALA)', 'Tashkent (TAS)', 'Astana (NQZ)', 'Osh (OSS)'];
-const POPULAR_TO   = ['Dubai (DXB)', 'Istanbul (IST)', 'Moscow (SVO)', 'Bangkok (BKK)', 'London (LHR)', 'Paris (CDG)', 'Tokyo (HND)', 'New York (JFK)'];
+const POPULAR_FROM = ['Dubai (DXB)', 'Abu Dhabi (AUH)', 'Istanbul (IST)', 'Doha (DOH)', 'Almaty (ALA)'];
+const POPULAR_TO   = ['Maldives (MLE)', 'Bali (DPS)', 'Phuket (HKT)', 'Seychelles (SEZ)', 'Mauritius (MRU)', 'Bangkok (BKK)', 'Istanbul (IST)', 'Paris (CDG)'];
 
 const CABINS = [
-  { val: 'Economy',         label: 'Economy'         },
-  { val: 'Premium Economy', label: 'Premium Economy' },
-  { val: 'Business',        label: 'Business'        },
-  { val: 'First',           label: 'First Class'     },
+  { val: 'Economy',         labelKey: 'economy'        },
+  { val: 'Premium Economy', labelKey: 'premiumEconomy' },
+  { val: 'Business',        labelKey: 'businessClass'  },
+  { val: 'First',           labelKey: 'firstClass'     },
 ];
 
 export default function FlightSearch({ formData, onChange, onSubmit, loading }) {
@@ -33,15 +33,15 @@ export default function FlightSearch({ formData, onChange, onSubmit, loading }) 
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl ring-4 ring-[#febb02]/20 border border-[#febb02]/50 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-lift ring-4 ring-[#febb02]/20 border border-[#febb02]/50 overflow-hidden">
       {/* ── Trip type / pax / cabin row ── */}
       <div className="bg-[#f8f9fa] border-b border-[#e7e7e7] px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
         {/* Trip type tabs */}
         <div className="flex items-center gap-1 bg-white border border-[#e7e7e7] rounded-lg p-0.5">
           {[
-            { v: 'roundtrip', l: 'Round-trip' },
-            { v: 'oneway',    l: 'One-way'    },
-            { v: 'multi',     l: 'Multi-city' },
+            { v: 'roundtrip', l: t('flightsPage.search.roundtrip') },
+            { v: 'oneway',    l: t('flightsPage.search.oneway')    },
+            { v: 'multi',     l: t('flightsPage.search.multi')     },
           ].map(({ v, l }) => (
             <button key={v} type="button" onClick={() => setTripType(v)}
               className={`px-3 py-1.5 rounded-md text-[12px] font-black transition ${
@@ -57,16 +57,16 @@ export default function FlightSearch({ formData, onChange, onSubmit, loading }) 
           <button type="button" onClick={() => setPaxOpen(v => !v)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#e7e7e7] bg-white text-[12px] font-bold text-[#1a1a1a] hover:border-[#0071c2] transition">
             <Users className="w-3.5 h-3.5 text-[#0071c2]" />
-            {pax} {pax === 1 ? 'traveler' : 'travelers'}
+            {pax} {pax === 1 ? t('flightsPage.search.travelerSingular') : t('flightsPage.search.travelerPlural')}
             <span className="text-[#9ca3af]">·</span>
             <Briefcase className="w-3.5 h-3.5 text-[#0071c2]" /> {cabin}
             <ChevronDown className={`w-3 h-3 text-[#9ca3af] transition ${paxOpen ? 'rotate-180' : ''}`} />
           </button>
           {paxOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-64 bg-white border border-[#e7e7e7] rounded-xl shadow-2xl z-30 p-3 page-fade">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">Travelers</p>
+            <div className="absolute right-0 top-full mt-1.5 w-64 bg-white border border-[#e7e7e7] rounded-2xl shadow-float z-30 p-3 page-fade">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">{t('flightsPage.search.travelers')}</p>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[13px] font-bold text-[#1a1a1a]">Adults</span>
+                <span className="text-[13px] font-bold text-[#1a1a1a]">{t('flightsPage.search.adults')}</span>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => setPax(p => Math.max(1, p - 1))}
                     className="w-7 h-7 rounded-md border-2 border-[#0071c2] text-[#0071c2] font-black hover:bg-[#f0f5ff] active:scale-95 transition">−</button>
@@ -75,14 +75,14 @@ export default function FlightSearch({ formData, onChange, onSubmit, loading }) 
                     className="w-7 h-7 rounded-md border-2 border-[#0071c2] text-[#0071c2] font-black hover:bg-[#f0f5ff] active:scale-95 transition">+</button>
                 </div>
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">Cabin class</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">{t('flightsPage.search.cabinClass')}</p>
               <div className="grid grid-cols-2 gap-1.5">
                 {CABINS.map(c => (
                   <button key={c.val} type="button" onClick={() => { setCabin(c.val); setPaxOpen(false); }}
                     className={`px-2.5 py-2 rounded-lg text-[11.5px] font-black transition ${
                       cabin === c.val ? 'bg-[#003580] text-white' : 'bg-[#f8f9fa] text-[#1a1a1a] hover:bg-[#f0f5ff]'
                     }`}>
-                    {c.label}
+                    {t(`flightsPage.search.${c.labelKey}`)}
                   </button>
                 ))}
               </div>
@@ -99,7 +99,7 @@ export default function FlightSearch({ formData, onChange, onSubmit, loading }) 
             className="md:col-span-3"
             icon={<MapPin className="w-4 h-4" />}
             label={t('flights.form.from') || 'From'}
-            placeholder="Bishkek (FRU)"
+            placeholder="Dubai (DXB)"
             value={formData.from}
             onChange={set('from')}
             listId="from-suggestions"
@@ -108,9 +108,9 @@ export default function FlightSearch({ formData, onChange, onSubmit, loading }) 
 
           {/* Swap button — sits between the two fields */}
           <button type="button" onClick={swap}
-            className="md:col-span-1 flex items-center justify-center self-center mx-auto md:mx-0 -my-1 md:my-0 w-9 h-9 rounded-full bg-white border-2 border-[#0071c2] text-[#0071c2] hover:bg-[#f0f5ff] active:scale-95 transition shadow-sm"
-            aria-label="Swap from and to"
-            title="Swap From ↔ To">
+            className="md:col-span-1 flex items-center justify-center self-center mx-auto md:mx-0 -my-1 md:my-0 w-9 h-9 rounded-full bg-white border-2 border-[#0071c2] text-[#0071c2] hover:bg-[#f0f5ff] hover:rotate-180 active:scale-95 transition-all duration-300 shadow-soft hover:shadow-float"
+            aria-label={t('flightsPage.search.swapAria')}
+            title={t('flightsPage.search.swapTitle')}>
             <ArrowRightLeft className="w-4 h-4" />
           </button>
 
@@ -119,7 +119,7 @@ export default function FlightSearch({ formData, onChange, onSubmit, loading }) 
             className="md:col-span-3"
             icon={<MapPin className="w-4 h-4" />}
             label={t('flights.form.to') || 'To'}
-            placeholder="Dubai (DXB)"
+            placeholder="Maldives (MLE)"
             value={formData.to}
             onChange={set('to')}
             listId="to-suggestions"
@@ -143,7 +143,7 @@ export default function FlightSearch({ formData, onChange, onSubmit, loading }) 
             <FieldInput
               className="md:col-span-2"
               icon={<Calendar className="w-4 h-4" />}
-              label="Return"
+              label={t('flightsPage.search.return')}
               type="date"
               min={formData.date || today}
               value={formData.returnDate || ''}
@@ -155,28 +155,28 @@ export default function FlightSearch({ formData, onChange, onSubmit, loading }) 
 
           {/* Search button */}
           <button type="submit" disabled={loading || !formData.from || !formData.to}
-            className="md:col-span-1 flex items-center justify-center gap-2 bg-[#febb02] hover:bg-[#ffb700] disabled:opacity-60 disabled:cursor-not-allowed text-[#1a1a1a] font-black text-[14px] rounded-xl py-3 px-4 transition active:scale-95 shadow-md">
+            className="btn-gold md:col-span-1 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed text-[14px] py-3 px-4">
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
-            <span className="md:hidden">{loading ? 'Searching…' : 'Search'}</span>
+            <span className="md:hidden">{loading ? t('flightsPage.search.searching') : t('flightsPage.search.search')}</span>
           </button>
         </div>
 
         {/* Quick from/to chips */}
         <div className="flex items-center gap-1.5 flex-wrap pt-1 px-1">
-          <span className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af]">Popular routes:</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af]">{t('flightsPage.search.popularRoutes')}</span>
           {[
-            { from: 'Bishkek (FRU)', to: 'Dubai (DXB)',    label: 'FRU → DXB' },
-            { from: 'Bishkek (FRU)', to: 'Istanbul (IST)', label: 'FRU → IST' },
-            { from: 'Almaty (ALA)',  to: 'Bangkok (BKK)',  label: 'ALA → BKK' },
-            { from: 'Tashkent (TAS)',to: 'Istanbul (IST)', label: 'TAS → IST' },
-            { from: 'Bishkek (FRU)', to: 'London (LHR)',   label: 'FRU → LHR' },
+            { from: 'Dubai (DXB)',     to: 'Maldives (MLE)',   label: 'DXB → MLE' },
+            { from: 'Dubai (DXB)',     to: 'Bali (DPS)',       label: 'DXB → DPS' },
+            { from: 'Abu Dhabi (AUH)', to: 'Seychelles (SEZ)', label: 'AUH → SEZ' },
+            { from: 'Istanbul (IST)',  to: 'Mauritius (MRU)',  label: 'IST → MRU' },
+            { from: 'Dubai (DXB)',     to: 'Phuket (HKT)',     label: 'DXB → HKT' },
           ].map(r => {
             const active = formData.from === r.from && formData.to === r.to;
             return (
               <button key={r.label} type="button"
                 onClick={() => onChange({ ...formData, from: r.from, to: r.to })}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-black transition ${
-                  active ? 'bg-[#003580] text-white' : 'bg-[#f0f5ff] text-[#0071c2] hover:bg-[#dceaff]'
+                className={`px-2.5 py-1 rounded-full text-[11px] font-black transition active:scale-95 ${
+                  active ? 'bg-[#003580] text-white shadow-soft' : 'bg-[#f0f5ff] text-[#0071c2] hover:bg-[#dceaff]'
                 }`}>
                 {r.label}
               </button>
@@ -185,7 +185,7 @@ export default function FlightSearch({ formData, onChange, onSubmit, loading }) 
           {(formData.from || formData.to || formData.date) && (
             <button type="button" onClick={reset}
               className="ml-auto flex items-center gap-1 text-[11px] font-black text-[#9ca3af] hover:text-red-500 transition">
-              <RotateCcw className="w-3 h-3" /> Reset
+              <RotateCcw className="w-3 h-3" /> {t('flightsPage.search.reset')}
             </button>
           )}
         </div>
@@ -205,7 +205,7 @@ export default function FlightSearch({ formData, onChange, onSubmit, loading }) 
 /* ── Light Booking-style input ── */
 function FieldInput({ icon, label, placeholder, type = 'text', value, onChange, className = '', list, listId, min, required }) {
   return (
-    <label className={`block bg-white border-2 border-[#e7e7e7] hover:border-[#0071c2] focus-within:border-[#0071c2] focus-within:ring-4 focus-within:ring-[#0071c2]/15 rounded-xl px-3 py-2.5 transition ${className}`}>
+    <label className={`block bg-white border-2 border-[#e7e7e7] hover:border-[#0071c2] focus-within:border-[#0071c2] focus-within:ring-4 focus-within:ring-[#0071c2]/15 focus-within:shadow-soft rounded-xl px-3 py-2.5 transition ${className}`}>
       <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-0.5">
         <span className="text-[#0071c2]">{icon}</span>{label}
       </div>

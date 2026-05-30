@@ -42,6 +42,22 @@ const fmtTime = (h, m) => {
   return `${h12}:${pad(m)} ${period}`;
 };
 
+// Resolve the departure date → default to the nearest upcoming day (tomorrow) when none picked
+const resolveDepartDate = (d) => {
+  if (d) return d;
+  const dt = new Date();
+  dt.setDate(dt.getDate() + 1);
+  return dt.toISOString().split('T')[0];
+};
+
+// Format "YYYY-MM-DD" → "Mon, 12 Jun" (short, human-readable departure-day label)
+export const formatFlightDate = (iso, locale = 'en-US') => {
+  if (!iso) return '';
+  const dt = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(dt.getTime())) return iso;
+  return dt.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
+};
+
 // Approximate base prices for popular city pairs (USD, one-way economy)
 const BASE_PRICES = {
   'FRU-DXB': 240, 'FRU-IST': 280, 'FRU-MOW': 180, 'FRU-LON': 520, 'FRU-PAR': 540, 'FRU-NYC': 740, 'FRU-BKK': 380, 'FRU-TKO': 720,
@@ -119,10 +135,15 @@ export const searchFlights = async ({ from, to, date, cabin = 'Economy', pax = 1
 
   if (!from || !to) return [];
 
-  const seedStr = `${from}|${to}|${date || 'any'}|${cabin}`;
+  // Every flight is anchored to a concrete departure day (the one the user picked,
+  // or the nearest upcoming day if they didn't pick one).
+  const departDate = resolveDepartDate(date);
+  const seedStr = `${from}|${to}|${departDate}|${cabin}`;
   const rand = mulberry32(hashSeed(seedStr));
-  // Prefer AI-suggested base price when present, otherwise the curated table
-  const basePrice = Number.isFinite(aiBasePrice) ? aiBasePrice : matchPrice(from, to);
+  // Approximate ECONOMY fares in the ~$400–$900 band (deterministic per route+date).
+  // NOTE: these are ESTIMATES only — the exact, real-time fare is always shown on
+  // the airline / booking site the user is redirected to. AI refinement may nudge
+  // the anchor but the number still isn't a live quote.
   const cabinMult = CABIN_MULTIPLIER[cabin] || 1;
 
   const pickAirline = () => AIRLINES[Math.floor(rand() * AIRLINES.length)];
@@ -142,14 +163,19 @@ export const searchFlights = async ({ from, to, date, cabin = 'Economy', pax = 1
     // Departure 04:00–23:00
     const depH = 4 + Math.floor(rand() * 19);
     const depM = Math.floor(rand() * 12) * 5;
-    const arrTotal = (depH * 60 + depM + baseMins) % (24 * 60);
+    const depMins = depH * 60 + depM;
+    const arrNextDay = depMins + baseMins >= 24 * 60;       // lands the following day
+    const arrTotal = (depMins + baseMins) % (24 * 60);
     const arrH = Math.floor(arrTotal / 60);
     const arrM = arrTotal % 60;
 
-    // Price: base * cabin * (1 + small jitter) + extra per stop
-    const jitter   = 0.8 + rand() * 0.5;
-    const stopCost = stops * (-15 - rand() * 25);  // stops are usually cheaper
-    const price    = Math.round(basePrice * cabinMult * jitter + stopCost);
+    // Approximate economy fare in the $400–$900 band, varied per flight.
+    const economyAnchor = Number.isFinite(aiBasePrice)
+      ? aiBasePrice * (0.85 + rand() * 0.3)
+      : 400 + Math.floor(rand() * 501);            // 400..900
+    const stopCost = stops * (-10 - rand() * 20);  // stops usually a bit cheaper
+    let price = Math.round(economyAnchor * cabinMult + stopCost);
+    if (cabin === 'Economy') price = Math.max(400, Math.min(900, price));
 
     const seatsLeft = 1 + Math.floor(rand() * 23);
 
@@ -164,11 +190,13 @@ export const searchFlights = async ({ from, to, date, cabin = 'Economy', pax = 1
       totalPrice: price * Math.max(1, Number(pax) || 1),
       departure: fmtTime(depH, depM),
       arrival:   fmtTime(arrH, arrM),
+      departMins: depMins,          // minutes from midnight → for "nearest departure" sorting
+      arrNextDay,
       duration,
       stops,
       from: String(from).toUpperCase(),
       to:   String(to).toUpperCase(),
-      date,
+      date: departDate,
       seats: seatsLeft,
       eco:   stops === 0 && airline.code !== 'EK',  // direct + non-Emirates pseudo "eco"
     };

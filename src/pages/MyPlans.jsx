@@ -1,13 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Sparkles, MapPin, Calendar, Wallet, Trash2, ArrowRight, Map, Clock,
+  Sparkles, MapPin, Calendar, Wallet, Trash2, ArrowRight, Map, Clock, Download,
 } from 'lucide-react';
 import useSavedPlansStore from '../store/useSavedPlansStore';
 import useStore from '../store/useStore';
 import useSEO from '../hooks/useSEO';
 import { useTranslation } from '../store/useLangStore';
 import { heroFor } from '../utils/destinationImages';
+import { downloadPlanPdf } from '../utils/planPdf';
 import { toast } from '../components/Toast';
 import SmartImage from '../components/SmartImage';
 
@@ -146,10 +147,17 @@ export default function MyPlans() {
                           <div className="text-[12px] text-[#9ca3af] font-bold">{t('lists.plans.openToView')}</div>
                         )}
                       </div>
-                      <button onClick={() => openPlan(plan)}
-                        className="px-4 py-2.5 rounded-xl bg-[#0071c2] hover:bg-[#005fa3] text-white text-[12px] font-black flex items-center gap-1.5 transition active:scale-95 shadow-soft group-hover:shadow-float">
-                        {t('lists.plans.open')} <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => downloadPlanPdf(plan)}
+                          className="px-3 py-2.5 rounded-xl border-2 border-[#0071c2] text-[#0071c2] hover:bg-[#f0f5ff] text-[12px] font-black flex items-center gap-1.5 transition active:scale-95"
+                          title={t('lists.plans.downloadPdf') || 'Download PDF'}>
+                          <Download className="w-3.5 h-3.5" /> PDF
+                        </button>
+                        <button onClick={() => openPlan(plan)}
+                          className="px-4 py-2.5 rounded-xl bg-[#0071c2] hover:bg-[#005fa3] text-white text-[12px] font-black flex items-center gap-1.5 transition active:scale-95 shadow-soft group-hover:shadow-float">
+                          {t('lists.plans.open')} <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

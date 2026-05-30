@@ -2,9 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Plane, Filter, TrendingDown, ExternalLink, Search, Star, Globe, Clock,
+  Plane, Filter, TrendingDown, ExternalLink, Search, Star, Globe,
   ArrowRight, Sparkles, Shield, BadgePercent, Headphones, ThumbsUp, MapPin,
-  Sunrise, Sun, Moon, Sunset, X, Wallet, BadgeCheck,
+  X, Wallet, BadgeCheck,
   Telescope, Compass, Map,
 } from 'lucide-react';
 import FlightSearch from '../features/flights/FlightSearch';
@@ -13,7 +13,6 @@ import { useFlights } from '../hooks/useFlights';
 import { AIRLINE_LINKS } from '../services/airlineLinks';
 import useStore from '../store/useStore';
 import { useTranslation } from '../store/useLangStore';
-import useAdminStore from '../store/useAdminStore';
 import useSEO from '../hooks/useSEO';
 import { heroFor } from '../utils/destinationImages';
 import { toast } from '../components/Toast';
@@ -39,24 +38,6 @@ const POPULAR_ROUTES = [
   { from: 'Abu Dhabi (AUH)', to: 'Maldives (MLE)',    city: 'Maldives',   country: 'Maldives',    from$: 430 },
 ];
 
-const TIME_SLOTS = [
-  { id: 'early',   icon: Sunrise, labelKey: 'early',     rangeKey: 'earlyRange',     start: 0,  end: 6  },
-  { id: 'morning', icon: Sun,     labelKey: 'morning',   rangeKey: 'morningRange',   start: 6,  end: 12 },
-  { id: 'afternoon', icon: Sun,   labelKey: 'afternoon', rangeKey: 'afternoonRange', start: 12, end: 18 },
-  { id: 'evening', icon: Sunset,  labelKey: 'evening',   rangeKey: 'eveningRange',   start: 18, end: 24 },
-];
-
-// Parse "HH:MM AM/PM" → hour (24h)
-const parseHour = (str) => {
-  const m = String(str || '').match(/(\d+):(\d+)\s*(AM|PM)?/i);
-  if (!m) return 12;
-  let h = Number(m[1]);
-  const ampm = (m[3] || '').toUpperCase();
-  if (ampm === 'AM' && h === 12) h = 0;
-  else if (ampm === 'PM' && h !== 12) h += 12;
-  return h;
-};
-
 export default function Flights() {
   const { t }      = useTranslation();
   const navigate   = useNavigate();
@@ -69,11 +50,9 @@ export default function Flights() {
   const [formData, setFormData] = useState({ from: '', to: '', date: '', returnDate: '' });
   const [filter,   setFilter]   = useState('all');                         // all | nonstop | business
   const [airlineFilter, setAirlineFilter] = useState(null);                // null = all
-  const [timeFilter, setTimeFilter]       = useState(null);                // null = all
   const [maxPrice,   setMaxPrice]         = useState(null);                // null = no cap
 
   const { flights }                   = useStore();
-  const adminFlights                  = useAdminStore(s => s.adminFlights);
   const { getFlights, loading, error, aiRefining, aiSource, source } = useFlights();
 
   const handleSearch = async (eOrPayload) => {
@@ -82,7 +61,6 @@ export default function Flights() {
     try {
       await getFlights(payload);
       setAirlineFilter(null);
-      setTimeFilter(null);
       setMaxPrice(null);
       toast.success(t('flightsPage.toast.foundTitle'), `${payload.from} → ${payload.to}`);
     } catch {
@@ -91,7 +69,6 @@ export default function Flights() {
   };
 
   const BOOKING_SITES = getBookingSites(t);
-  const adminAvailable = adminFlights.filter(f => f.available);
 
   /* ── Derived: filter state ── */
   const priceRange = useMemo(() => {
@@ -111,31 +88,39 @@ export default function Flights() {
       if (filter === 'business' && f.cabin !== 'Business') return false;
       if (airlineFilter && f.airline !== airlineFilter) return false;
       if (maxPrice != null && f.price > maxPrice)        return false;
-      if (timeFilter) {
-        const slot = TIME_SLOTS.find(s => s.id === timeFilter);
-        if (slot) {
-          const h = parseHour(f.departure);
-          if (h < slot.start || h >= slot.end)           return false;
-        }
-      }
       return true;
     });
-  }, [flights, filter, airlineFilter, timeFilter, maxPrice]);
+  }, [flights, filter, airlineFilter, maxPrice]);
 
   const cheapest  = flights.length ? Math.min(...flights.map(f => f.price)) : null;
-  const fastest   = flights.length ? flights.reduce((a, b) => durMins(a.duration) < durMins(b.duration) ? a : b) : null;
 
-  const clearFilters = () => { setFilter('all'); setAirlineFilter(null); setTimeFilter(null); setMaxPrice(null); };
-  const hasFilters = filter !== 'all' || airlineFilter || timeFilter || maxPrice != null;
+  const clearFilters = () => { setFilter('all'); setAirlineFilter(null); setMaxPrice(null); };
+  const hasFilters = filter !== 'all' || airlineFilter || maxPrice != null;
 
   return (
-    <div className="bg-[#f5f5f5] min-h-screen -mt-[64px]">
+    <div className="relative bg-[#f7f8fa] min-h-screen -mt-[64px] overflow-hidden">
+      {/* ── soft, airy ambient tints ── */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[820px]"
+        style={{
+          background:
+            'radial-gradient(46rem 40rem at 10% 0%, rgba(0,113,194,0.06) 0%, transparent 60%), radial-gradient(42rem 38rem at 94% 2%, rgba(245,185,66,0.06) 0%, transparent 60%)',
+        }}
+      />
 
+      <div className="relative z-10">
       {/* ── HERO + SEARCH ── */}
-      <section className="relative aurora-bg text-white pt-[100px] pb-32 md:pb-36 overflow-hidden">
-        <div className="film-grain" />
-        <div className="absolute inset-0 sheen-top pointer-events-none" />
-        <Plane className="absolute right-[6%] top-[120px] w-40 h-40 text-white/[0.06] -rotate-[25deg] animate-float pointer-events-none hidden md:block" />
+      <section className="relative text-white pt-[120px] pb-36 md:pb-44 overflow-hidden">
+        {/* real Maldives photo */}
+        <div
+          className="absolute inset-0 bg-cover bg-center scale-105"
+          style={{ backgroundImage: `url(${heroFor('maldives')})` }}
+        />
+        {/* navy gradient for white-text legibility */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#001a3d]/85 via-[#002250]/70 to-[#003580]/55" />
+        {/* fade INTO the light page */}
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-[#f7f8fa]" />
+        <Plane className="absolute right-[6%] top-[120px] w-40 h-40 text-white/[0.08] -rotate-[25deg] animate-float pointer-events-none hidden md:block" />
         <div className="absolute -right-24 -bottom-12 w-80 h-80 rounded-full bg-[#febb02]/12 blur-3xl pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
           <div className="max-w-2xl mb-7">
@@ -173,7 +158,7 @@ export default function Flights() {
             { icon: Headphones,   t: t('flightsPage.trust.support'),   s: t('flightsPage.trust.supportSub') },
             { icon: ThumbsUp,     t: t('flightsPage.trust.rating'),    s: t('flightsPage.trust.ratingSub') },
           ].map((f, i) => (
-            <div key={i} className="bg-white border border-[#e7e7e7] rounded-2xl p-4 flex items-center gap-3 hover:border-[#0071c2] shadow-soft hover:shadow-float lift transition-colors">
+            <div key={i} className="bg-white border border-[#ececf0] rounded-2xl p-4 flex items-center gap-3 hover:border-[#0071c2]/40 shadow-soft hover:shadow-float hover:-translate-y-0.5 transition-all duration-300">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f0f5ff] to-[#dceaff] text-[#0071c2] flex items-center justify-center shrink-0 shadow-soft">
                 <f.icon className="w-5 h-5" />
               </div>
@@ -244,22 +229,6 @@ export default function Flights() {
                   </div>
                 </FilterGroup>
 
-                {/* Departure time */}
-                <FilterGroup title={t('flightsPage.filters.departureTime')}>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {TIME_SLOTS.map(s => (
-                      <button key={s.id} onClick={() => setTimeFilter(timeFilter === s.id ? null : s.id)}
-                        className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl text-[11px] font-black transition border active:scale-95 ${
-                          timeFilter === s.id ? 'bg-[#003580] text-white border-[#003580] shadow-soft' : 'bg-white border-[#e7e7e7] text-[#1a1a1a] hover:border-[#0071c2]'
-                        }`}>
-                        <s.icon className="w-3.5 h-3.5" />
-                        {t(`flightsPage.filters.${s.labelKey}`)}
-                        <span className={`text-[9px] font-bold ${timeFilter === s.id ? 'text-white/70' : 'text-[#9ca3af]'}`}>{t(`flightsPage.filters.${s.rangeKey}`)}</span>
-                      </button>
-                    ))}
-                  </div>
-                </FilterGroup>
-
                 {/* Airlines */}
                 <FilterGroup title={t('flightsPage.filters.airlines')}>
                   <div className="space-y-1">
@@ -280,11 +249,11 @@ export default function Flights() {
               </div>
 
               {/* Quick insights */}
-              {cheapest && fastest && (
-                <div className="bg-white border border-[#e7e7e7] shadow-soft rounded-2xl p-4 space-y-2.5">
+              {cheapest != null && (
+                <div className="bg-white border border-[#ececf0] shadow-soft rounded-2xl p-4 space-y-2.5">
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af] mb-2">{t('flightsPage.highlights.title')}</h3>
                   <Insight icon={<Wallet className="w-3.5 h-3.5" />} label={t('flightsPage.highlights.cheapest')} val={`$${cheapest}`} sub={flights.find(f => f.price === cheapest)?.airline} />
-                  <Insight icon={<Clock className="w-3.5 h-3.5" />}  label={t('flightsPage.highlights.fastest')}  val={fastest.duration} sub={fastest.airline} />
+                  <Insight icon={<Plane className="w-3.5 h-3.5" />}  label={t('flightsPage.highlights.nonstop') || 'Non-stop'} val={`${flights.filter(f => f.stops === 0).length}`} sub={t('flights.results.direct') || 'direct'} />
                 </div>
               )}
             </aside>
@@ -363,13 +332,13 @@ export default function Flights() {
         {/* ── Inspiration: Popular routes (only when no search yet) ── */}
         {!loading && flights.length === 0 && (
           <>
-            <section className="mt-8">
-              <div className="flex items-end justify-between mb-5">
+            <section className="mt-10">
+              <div className="flex items-end justify-between mb-6">
                 <div>
-                  <div className="inline-flex items-center gap-2 text-[#0071c2] text-[11px] font-black uppercase tracking-widest mb-1">
+                  <div className="inline-flex items-center gap-2 text-[#0071c2] text-[11px] font-black uppercase tracking-[0.2em] mb-2">
                     <TrendingDown className="w-3.5 h-3.5" /> {t('flightsPage.inspiration.eyebrow')}
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-black text-gradient tracking-tight">{t('flightsPage.inspiration.title')}</h2>
+                  <h2 className="font-display text-2xl md:text-[34px] font-bold text-[#1a1a1a] tracking-tight">{t('flightsPage.inspiration.title')}</h2>
                 </div>
               </div>
 
@@ -381,15 +350,15 @@ export default function Flights() {
                       handleSearch({ formData: { from: r.from, to: r.to, date: '' } });
                       window.scrollTo({ top: 80, behavior: 'smooth' });
                     }}
-                    className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-cover bg-center lift shadow-soft hover:shadow-lift border border-[#e7e7e7] active:scale-[0.98]"
+                    className="group relative aspect-[4/5] overflow-hidden rounded-3xl bg-cover bg-center shadow-soft hover:shadow-float hover:-translate-y-1 border border-[#ececf0] transition-all duration-300 active:scale-[0.98]"
                     style={{ backgroundImage: `url(${heroFor(r.city)})` }}>
                     <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style={{ backgroundImage: `url(${heroFor(r.city)})` }} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
                     <div className="absolute inset-0 p-3 md:p-4 flex flex-col justify-end text-left text-white">
                       <div className="text-[10px] font-black uppercase tracking-widest text-[#febb02] mb-1">{r.country}</div>
-                      <div className="text-[18px] md:text-[20px] font-black leading-tight">{r.city}</div>
-                      <div className="text-[10px] text-white/75 font-bold mb-2">{r.from.split(' (')[0]} → {r.to.split(' (')[0]}</div>
-                      <div className="inline-flex items-center gap-1 bg-white/95 text-[#003580] font-black px-2 py-0.5 rounded-md w-fit text-[11px] shadow-soft">
+                      <div className="font-display text-[18px] md:text-[21px] font-bold leading-tight">{r.city}</div>
+                      <div className="text-[10px] text-white/75 font-bold mb-2.5">{r.from.split(' (')[0]} → {r.to.split(' (')[0]}</div>
+                      <div className="inline-flex items-center gap-1.5 bg-[#febb02] text-[#1a1a1a] font-black px-2.5 py-1 rounded-lg w-fit text-[11px] shadow-soft group-hover:gap-2.5 transition-all">
                         <Plane className="w-3 h-3" /> {t('flightsPage.inspiration.from')} ${r.from$}
                       </div>
                     </div>
@@ -398,9 +367,9 @@ export default function Flights() {
               </div>
             </section>
 
-            {/* AI Trip CTA */}
-            <section className="mt-8">
-              <div className="relative overflow-hidden bg-gradient-to-r from-[#002250] via-[#0058b1] to-[#0071c2] rounded-3xl p-6 md:p-8 text-white shadow-lift">
+            {/* AI Trip CTA — rich blue/gold accent band */}
+            <section className="mt-10">
+              <div className="relative overflow-hidden bg-gradient-to-br from-[#003580] via-[#0071c2] to-[#003580] rounded-3xl p-6 md:p-9 text-white shadow-float">
                 <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-[#febb02]/30 blur-3xl pointer-events-none animate-float" />
                 <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
                   <div className="max-w-xl">
@@ -424,41 +393,21 @@ export default function Flights() {
           </>
         )}
 
-        {/* ── Featured Routes (admin-curated) ── */}
-        {!loading && flights.length === 0 && adminAvailable.length > 0 && (
-          <section className="mt-10">
-            <div className="flex items-center gap-2 mb-4">
-              <Plane className="w-4 h-4 text-[#0071c2]" />
-              <h2 className="text-[18px] font-black text-[#1a1a1a]">{t('flights.available') || 'Featured routes'}</h2>
-              <span className="ml-1 px-2 py-0.5 bg-blue-100 text-[#0071c2] text-[11px] font-bold rounded-full">{adminAvailable.length} {t('flights.routes') || 'routes'}</span>
-            </div>
-            <div className="space-y-3">
-              {adminAvailable.map((f, idx) => (
-                <FlightCard key={f.id} index={idx} flight={{
-                  id: f.id, airline: f.airline, airlineCode: f.code, cabin: f.cabin,
-                  departure: f.dep, arrival: f.arr, from: f.from, to: f.to,
-                  duration: f.dur, stops: f.stops, price: f.price, seats: f.seats,
-                }} />
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* ── Official airlines · book direct ── */}
-        <section className="mt-10">
-          <div className="flex items-end gap-2 mb-2 flex-wrap">
-            <BadgeCheck className="w-5 h-5 text-[#008009]" />
-            <h2 className="text-[20px] md:text-[24px] font-black text-[#1a1a1a]">{t('flightsPage.direct.title')}</h2>
-            <span className="px-2 py-0.5 bg-[#e8f5e9] text-[#008009] text-[10px] font-black uppercase tracking-wider rounded-md">{t('flightsPage.direct.official')}</span>
+        <section className="mt-12">
+          <div className="inline-flex items-center gap-2 text-[#008009] text-[11px] font-black uppercase tracking-[0.2em] mb-2">
+            <BadgeCheck className="w-3.5 h-3.5" /> {t('flightsPage.direct.official')}
           </div>
-          <p className="text-[#595959] text-[13px] font-medium mb-5">
+          <h2 className="font-display text-2xl md:text-[34px] font-bold text-[#1a1a1a] tracking-tight">{t('flightsPage.direct.title')}</h2>
+          <p className="text-[#595959] text-[13px] md:text-[14px] font-medium mb-6 mt-2 max-w-2xl leading-relaxed">
             {t('flightsPage.direct.sub')}
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {Object.values(AIRLINE_LINKS).map((al) => (
               <a key={al.name} href={al.homepage} target="_blank" rel="noopener noreferrer"
-                className="bg-white border-2 border-[#e7e7e7] hover:border-[#008009] shadow-soft hover:shadow-float lift rounded-2xl p-4 flex flex-col gap-2 transition-colors group active:scale-[0.98]">
+                className="bg-white border border-[#ececf0] hover:border-[#008009]/40 shadow-soft hover:shadow-float hover:-translate-y-0.5 rounded-2xl p-4 flex flex-col gap-2 transition-all duration-300 group active:scale-[0.98]">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="w-10 h-10 rounded-xl bg-[#f8f9fa] border border-[#e7e7e7] flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform">
@@ -487,13 +436,12 @@ export default function Flights() {
         </section>
 
         {/* ── Aggregators · compare prices ── */}
-        <section className="mt-10">
-          <div className="flex items-end gap-2 mb-2 flex-wrap">
-            <Globe className="w-5 h-5 text-[#0071c2]" />
-            <h2 className="text-[20px] md:text-[24px] font-black text-[#1a1a1a]">{t('flights.bookingSites') || 'Compare on aggregators'}</h2>
-            <span className="px-2 py-0.5 bg-[#f0f5ff] text-[#0071c2] text-[10px] font-black uppercase tracking-wider rounded-md">{t('flightsPage.aggregators.thirdParty')}</span>
+        <section className="mt-12">
+          <div className="inline-flex items-center gap-2 text-[#0071c2] text-[11px] font-black uppercase tracking-[0.2em] mb-2">
+            <Globe className="w-3.5 h-3.5" /> {t('flightsPage.aggregators.thirdParty')}
           </div>
-          <p className="text-[#595959] text-[13px] font-medium mb-5">
+          <h2 className="font-display text-2xl md:text-[34px] font-bold text-[#1a1a1a] tracking-tight">{t('flights.bookingSites') || 'Compare on aggregators'}</h2>
+          <p className="text-[#595959] text-[13px] md:text-[14px] font-medium mb-6 mt-2 max-w-2xl leading-relaxed">
             {t('flights.bookingSub') || 'Open the platform with the best fare for your route. Sometimes 10–30% cheaper than the airline itself.'}
           </p>
 
@@ -554,6 +502,7 @@ export default function Flights() {
           </div>
         </section>
       </div>
+      </div>
     </div>
   );
 }
@@ -585,10 +534,3 @@ const Insight = ({ icon, label, val, sub }) => (
     </div>
   </div>
 );
-
-/* Helper for duration sort */
-function durMins(s) {
-  const m = String(s || '').match(/(\d+)h\s*(\d+)?m?/);
-  if (!m) return 999;
-  return Number(m[1]) * 60 + Number(m[2] || 0);
-}

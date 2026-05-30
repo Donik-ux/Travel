@@ -33,7 +33,7 @@ export default function FlightSearch({ formData, onChange, onSubmit, loading }) 
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lift ring-4 ring-[#febb02]/20 border border-[#febb02]/50 overflow-hidden">
+    <div className="bg-white rounded-3xl shadow-[0_30px_80px_-24px_rgba(0,26,61,0.45)] ring-1 ring-white/60 border border-[#ececf0] overflow-hidden">
       {/* ── Trip type / pax / cabin row ── */}
       <div className="bg-[#f8f9fa] border-b border-[#e7e7e7] px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
         {/* Trip type tabs */}

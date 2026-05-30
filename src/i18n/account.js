@@ -93,6 +93,11 @@ export default {
       noBookings: 'No bookings yet.',
       viewAll: 'View all',
       bookingsWord: 'bookings',
+      myPlans: 'My AI Trip Plans',
+      viewAllPlans: 'View all',
+      noPlansTitle: 'No saved plans yet',
+      noPlansSub: 'Generate a trip with our AI planner — it will be saved here automatically.',
+      daysWord: 'days',
     },
     dashboard: {
       welcome: 'Welcome back',
@@ -225,6 +230,11 @@ export default {
       noBookings: 'Hozircha bronlar yoʻq.',
       viewAll: 'Hammasini koʻrish',
       bookingsWord: 'ta bron',
+      myPlans: 'AI sayohat rejalarim',
+      viewAllPlans: 'Hammasini koʻrish',
+      noPlansTitle: 'Hali saqlangan reja yoʻq',
+      noPlansSub: 'AI rejalashtiruvchimiz bilan sayohat yarating — u shu yerda avtomatik saqlanadi.',
+      daysWord: 'kun',
     },
     dashboard: {
       welcome: 'Xush kelibsiz',

@@ -54,7 +54,7 @@ export const useFlights = () => {
       try {
         const amad = await callAmadeus(params);
         setFlights(amad.flights);
-        setSource('amadeus');
+        setSource(amad.source || 'amadeus');   // 'travelpayouts' | 'amadeus'
         setLoading(false);
         return amad.flights;
       } catch (err) {

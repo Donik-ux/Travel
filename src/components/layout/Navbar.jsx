@@ -48,20 +48,23 @@ export default function Navbar() {
     <>
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-premium ${
         scrolled
-          ? 'bg-[#001a3d]/95 backdrop-blur-md shadow-[0_8px_30px_rgba(0,8,24,0.5)]'
-          : 'bg-[#002250]'
+          ? 'bg-[#00112b]/80 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,8,24,0.55)] border-b border-white/10'
+          : 'bg-gradient-to-r from-[#001026] via-[#002250] to-[#001a3d] border-b border-white/[0.06]'
       }`}>
+        {/* ambient gold glow */}
+        <div className="pointer-events-none absolute -top-12 left-1/3 w-80 h-24 bg-[#f5b942]/10 blur-3xl rounded-full" />
         {/* Gold hairline accent */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f5b942]/45 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f5b942]/55 to-transparent" />
 
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-[64px] flex items-center justify-between gap-4">
           {/* Logo */}
           <button onClick={() => navigate('/')} className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#f5b942] to-[#d99a2b] flex items-center justify-center shadow-[0_4px_14px_rgba(245,185,66,0.4)] group-hover:scale-105 transition-premium">
-              <Compass className="w-[19px] h-[19px] text-[#002250]" strokeWidth={2.5} />
+            <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-[#ffd76e] via-[#f5b942] to-[#d99a2b] flex items-center justify-center shadow-[0_4px_16px_rgba(245,185,66,0.5)] ring-1 ring-white/30 group-hover:scale-105 group-hover:rotate-[8deg] transition-premium">
+              <span className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/40 to-transparent" />
+              <Compass className="relative w-[19px] h-[19px] text-[#002250]" strokeWidth={2.5} />
             </div>
             <div className="hidden sm:flex flex-col leading-none">
-              <span className="text-[15px] font-black text-white tracking-tight">MAFTRAVEL</span>
+              <span className="text-[15px] font-black tracking-tight bg-gradient-to-r from-white to-white/75 bg-clip-text text-transparent">MAFTRAVEL</span>
               <span className="text-[9px] font-bold text-[#f5b942] tracking-[0.2em] uppercase mt-1">Travel Smarter</span>
             </div>
           </button>
@@ -71,7 +74,7 @@ export default function Navbar() {
             {links.map(({ to, label }) => (
               <NavLink key={to} to={to}
                 className={({ isActive }) =>
-                  `px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-premium ${isActive ? 'text-[#f5b942]' : 'text-white/65 hover:text-white hover:bg-white/[0.07]'}`
+                  `px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-premium ${isActive ? 'text-[#f5b942] bg-[#f5b942]/10' : 'text-white/65 hover:text-white hover:bg-white/[0.07]'}`
                 }
               >
                 {({ isActive }) => (
